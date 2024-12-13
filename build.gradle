@@ -1511,6 +1511,7 @@ project(':group-coordinator') {
   }
 
   dependencies {
+    implementation project(':share')
     implementation project(':server-common')
     implementation project(':clients')
     implementation project(':metadata')
