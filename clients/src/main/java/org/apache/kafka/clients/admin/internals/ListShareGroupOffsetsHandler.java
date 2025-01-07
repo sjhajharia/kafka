@@ -30,14 +30,13 @@ import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ListShareGroupOffsetsHandler implements AdminApiHandler<CoordinatorKey, Map<TopicPartition, Long>> {
+public class ListShareGroupOffsetsHandler extends AdminApiHandler.Batched<CoordinatorKey, Map<TopicPartition, Long>>{
 
     private final Map<String, ListShareGroupOffsetsSpec> groupSpecs;
     private final Logger log;
@@ -80,7 +79,8 @@ public class ListShareGroupOffsetsHandler implements AdminApiHandler<Coordinator
             .collect(Collectors.toSet());
     }
 
-    public OffsetFetchRequest.Builder buildBatchedRequest(Set<CoordinatorKey> coordinatorKeys) {
+    @Override
+    public OffsetFetchRequest.Builder buildBatchedRequest(int brokerId, Set<CoordinatorKey> coordinatorKeys) {
         // Create a map that only contains the consumer groups owned by the coordinator.
         Map<String, List<TopicPartition>> coordinatorGroupIdToTopicPartitions = new HashMap<>(coordinatorKeys.size());
         coordinatorKeys.forEach(g -> {
@@ -90,22 +90,6 @@ public class ListShareGroupOffsetsHandler implements AdminApiHandler<Coordinator
         });
 
         return new OffsetFetchRequest.Builder(coordinatorGroupIdToTopicPartitions, false, false);
-    }
-
-    @Override
-    public Collection<RequestAndKeys<CoordinatorKey>> buildRequest(int brokerId, Set<CoordinatorKey> groupIds) {
-        validateKeys(groupIds);
-
-        // When the OffsetFetchRequest fails with NoBatchedOffsetFetchRequestException, we completely disable
-        // the batching end-to-end, including the FindCoordinatorRequest.
-        if (lookupStrategy.batch()) {
-            return Collections.singletonList(new RequestAndKeys<>(buildBatchedRequest(groupIds), groupIds));
-        } else {
-            return groupIds.stream().map(groupId -> {
-                Set<CoordinatorKey> keys = Collections.singleton(groupId);
-                return new RequestAndKeys<>(buildBatchedRequest(keys), keys);
-            }).collect(Collectors.toList());
-        }
     }
 
     @Override
