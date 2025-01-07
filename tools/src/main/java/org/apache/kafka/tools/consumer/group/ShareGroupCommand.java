@@ -23,6 +23,7 @@ import org.apache.kafka.clients.admin.GroupListing;
 import org.apache.kafka.clients.admin.ListGroupsOptions;
 import org.apache.kafka.clients.admin.ListGroupsResult;
 import org.apache.kafka.clients.admin.ListOffsetsResult;
+import org.apache.kafka.clients.admin.ListShareGroupOffsetsSpec;
 import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.clients.admin.ShareGroupDescription;
 import org.apache.kafka.clients.admin.ShareMemberAssignment;
@@ -238,27 +239,27 @@ public class ShareGroupCommand {
                 }
 
                 // Fetch latest and earliest offsets
-                Map<TopicPartition, OffsetSpec> earliest = new HashMap<>();
+                Map<String, ListShareGroupOffsetsSpec> listShareGroupOffsetsSpecHashMap = new HashMap<>();
+                listShareGroupOffsetsSpecHashMap.put(groupId, new ListShareGroupOffsetsSpec().topicPartitions(allTp));
                 Map<TopicPartition, OffsetSpec> latest = new HashMap<>();
 
                 for (TopicPartition tp : allTp) {
-                    earliest.put(tp, OffsetSpec.earliest());
                     latest.put(tp, OffsetSpec.latest());
                 }
 
                 // This call to obtain the earliest offsets will be replaced once adminClient.listShareGroupOffsets is implemented
                 try {
-                    Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> earliestResult = adminClient.listOffsets(earliest).all().get();
+                    Map<TopicPartition, Long> shareGroupOffset = adminClient.listShareGroupOffsets(listShareGroupOffsetsSpecHashMap).all().get().get(groupId);
                     Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> latestResult = adminClient.listOffsets(latest).all().get();
 
                     Set<SharePartitionOffsetInformation> partitionOffsets = new HashSet<>();
 
-                    for (Entry<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> tp : earliestResult.entrySet()) {
+                    for (Entry<TopicPartition, Long> tp : shareGroupOffset.entrySet()) {
                         SharePartitionOffsetInformation partitionOffsetInfo = new SharePartitionOffsetInformation(
                             groupId,
                             tp.getKey().topic(),
                             tp.getKey().partition(),
-                            latestResult.get(tp.getKey()).offset() - earliestResult.get(tp.getKey()).offset()
+                            latestResult.get(tp.getKey()).offset() - shareGroupOffset.get(tp.getKey())
                         );
                         partitionOffsets.add(partitionOffsetInfo);
                     }
