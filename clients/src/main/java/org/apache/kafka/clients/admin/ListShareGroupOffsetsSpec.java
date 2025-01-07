@@ -74,7 +74,7 @@ public class ListShareGroupOffsetsSpec {
     @Override
     public String toString() {
         return "ListShareGroupOffsetsSpec(" +
-            "topicPartitions=" + topicPartitions +
+            "topicPartitions=" + (topicPartitions != null ? topicPartitions : "null") +
             ')';
     }
 }

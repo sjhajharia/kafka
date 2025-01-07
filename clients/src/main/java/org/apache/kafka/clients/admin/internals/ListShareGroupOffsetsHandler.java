@@ -58,7 +58,7 @@ public class ListShareGroupOffsetsHandler implements AdminApiHandler<Coordinator
 
     @Override
     public String apiName() {
-        return "offsetFetch";
+        return "listShareGroupOffsets";
     }
 
     @Override
@@ -70,7 +70,7 @@ public class ListShareGroupOffsetsHandler implements AdminApiHandler<Coordinator
         Set<CoordinatorKey> keys = coordinatorKeys(groupSpecs.keySet());
         if (!keys.containsAll(groupIds)) {
             throw new IllegalArgumentException("Received unexpected group ids " + groupIds +
-                " (expected one of " + keys + ")");
+                " (expected among " + keys + ")");
         }
     }
 
@@ -80,10 +80,10 @@ public class ListShareGroupOffsetsHandler implements AdminApiHandler<Coordinator
             .collect(Collectors.toSet());
     }
 
-    public OffsetFetchRequest.Builder buildBatchedRequest(Set<CoordinatorKey> groupIds) {
+    public OffsetFetchRequest.Builder buildBatchedRequest(Set<CoordinatorKey> coordinatorKeys) {
         // Create a map that only contains the consumer groups owned by the coordinator.
-        Map<String, List<TopicPartition>> coordinatorGroupIdToTopicPartitions = new HashMap<>(groupIds.size());
-        groupIds.forEach(g -> {
+        Map<String, List<TopicPartition>> coordinatorGroupIdToTopicPartitions = new HashMap<>(coordinatorKeys.size());
+        coordinatorKeys.forEach(g -> {
             ListShareGroupOffsetsSpec spec = groupSpecs.get(g.idValue);
             List<TopicPartition> partitions = spec.topicPartitions() != null ? new ArrayList<>(spec.topicPartitions()) : null;
             coordinatorGroupIdToTopicPartitions.put(g.idValue, partitions);

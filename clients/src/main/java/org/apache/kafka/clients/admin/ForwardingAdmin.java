@@ -299,8 +299,7 @@ public class ForwardingAdmin implements Admin {
     }
 
     @Override
-    public ListShareGroupOffsetsResult listShareGroupOffsets(Map<String, ListShareGroupOffsetsSpec> groupSpecs,
-                                                                   ListShareGroupOffsetsOptions options) {
+    public ListShareGroupOffsetsResult listShareGroupOffsets(Map<String, ListShareGroupOffsetsSpec> groupSpecs, ListShareGroupOffsetsOptions options) {
         return delegate.listShareGroupOffsets(groupSpecs, options);
     }
 
