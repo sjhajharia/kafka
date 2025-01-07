@@ -335,9 +335,11 @@
     <suppress checks="NPathComplexity"
               files="CoordinatorRuntime.java"/>
 
-    <!-- share coordinator -->
+    <!-- share coordinator and share -->
     <suppress checks="NPathComplexity"
               files="ShareCoordinatorShard.java"/>
+    <suppress checks="ClassDataAbstractionCouplingCheck"
+              files="(ShareCoordinatorServiceTest|DefaultStatePersisterTest).java"/>
     <suppress checks="CyclomaticComplexity"
               files="ShareCoordinatorShard.java"/>
 
