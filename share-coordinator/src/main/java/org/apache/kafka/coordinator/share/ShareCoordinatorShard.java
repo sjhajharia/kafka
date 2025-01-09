@@ -543,9 +543,6 @@ public class ShareCoordinatorShard implements CoordinatorShard<CoordinatorRecord
             );
         }
 
-        // Updating the leader map with the new leader epoch
-        leaderEpochMap.put(coordinatorKey, leaderEpoch);
-
         // Returning the successfully retrieved snapshot value
         return ReadShareGroupStateSummaryResponse.toResponseData(topicId, partition, offsetValue.startOffset(), offsetValue.stateEpoch());
     }

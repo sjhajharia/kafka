@@ -51,8 +51,8 @@ public class ListShareGroupOffsetsHandler extends AdminApiHandler.Batched<Coordi
         this.groupSpecs = groupSpecs;
     }
 
-    public static AdminApiFuture.SimpleAdminApiFuture<CoordinatorKey, Map<TopicPartition, Long>> newFuture(Collection<String> groupIds) {
-        return AdminApiFuture.forKeys(coordinatorKeys(groupIds));
+    public static AdminApiFuture.SimpleAdminApiFuture<CoordinatorKey, Map<TopicPartition, Long>> newFuture(Collection<String> coordinatorKeys) {
+        return AdminApiFuture.forKeys(coordinatorKeys(coordinatorKeys));
     }
 
     @Override
@@ -65,18 +65,12 @@ public class ListShareGroupOffsetsHandler extends AdminApiHandler.Batched<Coordi
         return lookupStrategy;
     }
 
-    private void validateKeys(Set<CoordinatorKey> groupIds) {
+    private void validateKeys(Set<CoordinatorKey> coordinatorKeys) {
         Set<CoordinatorKey> keys = coordinatorKeys(groupSpecs.keySet());
-        if (!keys.containsAll(groupIds)) {
-            throw new IllegalArgumentException("Received unexpected group ids " + groupIds +
+        if (!keys.containsAll(coordinatorKeys)) {
+            throw new IllegalArgumentException("Received unexpected group ids " + coordinatorKeys +
                 " (expected among " + keys + ")");
         }
-    }
-
-    private static Set<CoordinatorKey> coordinatorKeys(Collection<String> groupIds) {
-        return groupIds.stream()
-            .map(CoordinatorKey::byGroupId)
-            .collect(Collectors.toSet());
     }
 
     @Override
@@ -85,7 +79,7 @@ public class ListShareGroupOffsetsHandler extends AdminApiHandler.Batched<Coordi
         Map<String, List<TopicPartition>> coordinatorGroupIdToTopicPartitions = new HashMap<>(coordinatorKeys.size());
         coordinatorKeys.forEach(g -> {
             ListShareGroupOffsetsSpec spec = groupSpecs.get(g.idValue);
-            List<TopicPartition> partitions = spec.topicPartitions() != null ? new ArrayList<>(spec.topicPartitions()) : null;
+            List<TopicPartition> partitions = spec.topicPartitions() != null ? List.copyOf(spec.topicPartitions()) : null;
             coordinatorGroupIdToTopicPartitions.put(g.idValue, partitions);
         });
 
@@ -95,17 +89,17 @@ public class ListShareGroupOffsetsHandler extends AdminApiHandler.Batched<Coordi
     @Override
     public ApiResult<CoordinatorKey, Map<TopicPartition, Long>> handleResponse(
         Node coordinator,
-        Set<CoordinatorKey> groupIds,
+        Set<CoordinatorKey> coordinatorKeys,
         AbstractResponse abstractResponse
     ) {
-        validateKeys(groupIds);
+        validateKeys(coordinatorKeys);
 
         final OffsetFetchResponse response = (OffsetFetchResponse) abstractResponse;
 
         Map<CoordinatorKey, Map<TopicPartition, Long>> completed = new HashMap<>();
         Map<CoordinatorKey, Throwable> failed = new HashMap<>();
         List<CoordinatorKey> unmapped = new ArrayList<>();
-        for (CoordinatorKey coordinatorKey : groupIds) {
+        for (CoordinatorKey coordinatorKey : coordinatorKeys) {
             String group = coordinatorKey.idValue;
             if (response.groupHasError(group)) {
                 handleGroupError(CoordinatorKey.byGroupId(group), response.groupLevelError(group), failed, unmapped);
@@ -119,12 +113,7 @@ public class ListShareGroupOffsetsHandler extends AdminApiHandler.Batched<Coordi
 
                     if (error == Errors.NONE) {
                         final long offset = partitionData.offset;
-                        // Negative offset indicates that the group has no committed offset for this partition
-                        if (offset < 0) {
-                            groupOffsetsListing.put(topicPartition, null);
-                        } else {
-                            groupOffsetsListing.put(topicPartition, offset);
-                        }
+                        groupOffsetsListing.put(topicPartition, offset);
                     } else {
                         log.warn("Skipping return offset for {} due to error {}.", topicPartition, error);
                     }
@@ -135,6 +124,13 @@ public class ListShareGroupOffsetsHandler extends AdminApiHandler.Batched<Coordi
         return new ApiResult<>(completed, failed, unmapped);
     }
 
+    private static Set<CoordinatorKey> coordinatorKeys(Collection<String> coordinatorKeys) {
+        return coordinatorKeys.stream()
+            .map(CoordinatorKey::byGroupId)
+            .collect(Collectors.toSet());
+    }
+
+
     private void handleGroupError(
         CoordinatorKey groupId,
         Errors error,
@@ -143,8 +139,7 @@ public class ListShareGroupOffsetsHandler extends AdminApiHandler.Batched<Coordi
     ) {
         switch (error) {
             case GROUP_AUTHORIZATION_FAILED:
-            case UNKNOWN_MEMBER_ID:
-            case STALE_MEMBER_EPOCH:
+            case GROUP_ID_NOT_FOUND:
                 log.debug("`OffsetFetch` request for group id {} failed due to error {}", groupId.idValue, error);
                 failed.put(groupId, error.exception());
                 break;
