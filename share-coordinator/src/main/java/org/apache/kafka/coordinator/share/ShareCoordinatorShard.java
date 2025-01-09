@@ -518,7 +518,6 @@ public class ShareCoordinatorShard implements CoordinatorShard<CoordinatorRecord
 
         Uuid topicId = request.topics().get(0).topicId();
         int partition = request.topics().get(0).partitions().get(0).partition();
-        int leaderEpoch = request.topics().get(0).partitions().get(0).leaderEpoch();
 
         SharePartitionKey coordinatorKey = SharePartitionKey.getInstance(request.groupId(), topicId, partition);
 
