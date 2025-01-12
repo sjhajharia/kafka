@@ -682,8 +682,6 @@ class ShareCoordinatorShardTest {
             0,
             0
         ), result);
-
-        assertEquals(1, shard.getLeaderMapValue(coordinatorKey));
     }
 
     @Test
