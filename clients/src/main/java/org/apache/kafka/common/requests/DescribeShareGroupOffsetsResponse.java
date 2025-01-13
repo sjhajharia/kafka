@@ -52,12 +52,12 @@ public class DescribeShareGroupOffsetsResponse extends AbstractResponse {
 
     @Override
     public int throttleTimeMs() {
-        return DEFAULT_THROTTLE_TIME;
+        return data.throttleTimeMs();
     }
 
     @Override
     public void maybeSetThrottleTimeMs(int throttleTimeMs) {
-        // No op
+        data.setThrottleTimeMs(throttleTimeMs);
     }
 
     public static DescribeShareGroupOffsetsResponse parse(ByteBuffer buffer, short version) {

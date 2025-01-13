@@ -3765,7 +3765,9 @@ class KafkaApis(val requestChannel: RequestChannel,
   }
 
   def handleDescribeShareGroupOffsetsRequest(request: RequestChannel.Request): Unit = {
+    val describeShareGroupOffsetsRequest = request.body[DescribeShareGroupOffsetsRequest]
     // TODO: Implement the DescribeShareGroupOffsetsRequest handling
+    requestHelper.sendMaybeThrottle(request, describeShareGroupOffsetsRequest.getErrorResponse(Errors.UNSUPPORTED_VERSION.exception))
     CompletableFuture.completedFuture[Unit](())
   }
 
