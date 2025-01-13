@@ -90,6 +90,8 @@ import org.apache.kafka.common.message.DescribeProducersRequestDataJsonConverter
 import org.apache.kafka.common.message.DescribeProducersResponseDataJsonConverter;
 import org.apache.kafka.common.message.DescribeQuorumRequestDataJsonConverter;
 import org.apache.kafka.common.message.DescribeQuorumResponseDataJsonConverter;
+import org.apache.kafka.common.message.DescribeShareGroupOffsetsRequestDataJsonConverter;
+import org.apache.kafka.common.message.DescribeShareGroupOffsetsResponseDataJsonConverter;
 import org.apache.kafka.common.message.DescribeTopicPartitionsRequestDataJsonConverter;
 import org.apache.kafka.common.message.DescribeTopicPartitionsResponseDataJsonConverter;
 import org.apache.kafka.common.message.DescribeTransactionsRequestDataJsonConverter;
@@ -274,6 +276,8 @@ import org.apache.kafka.common.requests.DescribeProducersRequest;
 import org.apache.kafka.common.requests.DescribeProducersResponse;
 import org.apache.kafka.common.requests.DescribeQuorumRequest;
 import org.apache.kafka.common.requests.DescribeQuorumResponse;
+import org.apache.kafka.common.requests.DescribeShareGroupOffsetsRequest;
+import org.apache.kafka.common.requests.DescribeShareGroupOffsetsResponse;
 import org.apache.kafka.common.requests.DescribeTopicPartitionsRequest;
 import org.apache.kafka.common.requests.DescribeTopicPartitionsResponse;
 import org.apache.kafka.common.requests.DescribeTransactionsRequest;
@@ -577,6 +581,8 @@ public class RequestConvertToJson {
                 return RemoveRaftVoterRequestDataJsonConverter.write(((RemoveRaftVoterRequest) request).data(), request.version());
             case UPDATE_RAFT_VOTER:
                 return UpdateRaftVoterRequestDataJsonConverter.write(((UpdateRaftVoterRequest) request).data(), request.version());
+            case DESCRIBE_SHARE_GROUP_OFFSETS:
+                return DescribeShareGroupOffsetsRequestDataJsonConverter.write(((DescribeShareGroupOffsetsRequest) request).data(), request.version());
             default:
                 throw new IllegalStateException("ApiKey " + request.apiKey() + " is not currently handled in `request`, the " +
                     "code should be updated to do so.");
@@ -765,6 +771,8 @@ public class RequestConvertToJson {
                 return RemoveRaftVoterResponseDataJsonConverter.write(((RemoveRaftVoterResponse) response).data(), version);
             case UPDATE_RAFT_VOTER:
                 return UpdateRaftVoterResponseDataJsonConverter.write(((UpdateRaftVoterResponse) response).data(), version);
+            case DESCRIBE_SHARE_GROUP_OFFSETS:
+                return DescribeShareGroupOffsetsResponseDataJsonConverter.write(((DescribeShareGroupOffsetsResponse) response).data(), version);
             default:
                 throw new IllegalStateException("ApiKey " + response.apiKey() + " is not currently handled in `response`, the " +
                     "code should be updated to do so.");
