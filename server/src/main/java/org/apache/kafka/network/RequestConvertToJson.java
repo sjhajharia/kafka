@@ -405,6 +405,8 @@ public class RequestConvertToJson {
                 return AddOffsetsToTxnRequestDataJsonConverter.write(((AddOffsetsToTxnRequest) request).data(), request.version());
             case ADD_PARTITIONS_TO_TXN:
                 return AddPartitionsToTxnRequestDataJsonConverter.write(((AddPartitionsToTxnRequest) request).data(), request.version());
+            case ADD_RAFT_VOTER:
+                return AddRaftVoterRequestDataJsonConverter.write(((AddRaftVoterRequest) request).data(), request.version());
             case ALLOCATE_PRODUCER_IDS:
                 return AllocateProducerIdsRequestDataJsonConverter.write(((AllocateProducerIdsRequest) request).data(), request.version());
             case ALTER_CLIENT_QUOTAS:
@@ -473,6 +475,8 @@ public class RequestConvertToJson {
                 return DescribeProducersRequestDataJsonConverter.write(((DescribeProducersRequest) request).data(), request.version());
             case DESCRIBE_QUORUM:
                 return DescribeQuorumRequestDataJsonConverter.write(((DescribeQuorumRequest) request).data(), request.version());
+            case DESCRIBE_SHARE_GROUP_OFFSETS:
+                return DescribeShareGroupOffsetsRequestDataJsonConverter.write(((DescribeShareGroupOffsetsRequest) request).data(), request.version());
             case DESCRIBE_TOPIC_PARTITIONS:
                 return DescribeTopicPartitionsRequestDataJsonConverter.write(((DescribeTopicPartitionsRequest) request).data(), request.version());
             case DESCRIBE_TRANSACTIONS:
@@ -539,6 +543,8 @@ public class RequestConvertToJson {
                 return ReadShareGroupStateRequestDataJsonConverter.write(((ReadShareGroupStateRequest) request).data(), request.version());
             case READ_SHARE_GROUP_STATE_SUMMARY:
                 return ReadShareGroupStateSummaryRequestDataJsonConverter.write(((ReadShareGroupStateSummaryRequest) request).data(), request.version());
+            case REMOVE_RAFT_VOTER:
+                return RemoveRaftVoterRequestDataJsonConverter.write(((RemoveRaftVoterRequest) request).data(), request.version());
             case RENEW_DELEGATION_TOKEN:
                 return RenewDelegationTokenRequestDataJsonConverter.write(((RenewDelegationTokenRequest) request).data(), request.version());
             case SASL_AUTHENTICATE:
@@ -569,20 +575,14 @@ public class RequestConvertToJson {
                 return UpdateFeaturesRequestDataJsonConverter.write(((UpdateFeaturesRequest) request).data(), request.version());
             case UPDATE_METADATA:
                 return UpdateMetadataRequestDataJsonConverter.write(((UpdateMetadataRequest) request).data(), request.version());
+            case UPDATE_RAFT_VOTER:
+                return UpdateRaftVoterRequestDataJsonConverter.write(((UpdateRaftVoterRequest) request).data(), request.version());
             case VOTE:
                 return VoteRequestDataJsonConverter.write(((VoteRequest) request).data(), request.version());
             case WRITE_SHARE_GROUP_STATE:
                 return WriteShareGroupStateRequestDataJsonConverter.write(((WriteShareGroupStateRequest) request).data(), request.version());
             case WRITE_TXN_MARKERS:
                 return WriteTxnMarkersRequestDataJsonConverter.write(((WriteTxnMarkersRequest) request).data(), request.version());
-            case ADD_RAFT_VOTER:
-                return AddRaftVoterRequestDataJsonConverter.write(((AddRaftVoterRequest) request).data(), request.version());
-            case REMOVE_RAFT_VOTER:
-                return RemoveRaftVoterRequestDataJsonConverter.write(((RemoveRaftVoterRequest) request).data(), request.version());
-            case UPDATE_RAFT_VOTER:
-                return UpdateRaftVoterRequestDataJsonConverter.write(((UpdateRaftVoterRequest) request).data(), request.version());
-            case DESCRIBE_SHARE_GROUP_OFFSETS:
-                return DescribeShareGroupOffsetsRequestDataJsonConverter.write(((DescribeShareGroupOffsetsRequest) request).data(), request.version());
             default:
                 throw new IllegalStateException("ApiKey " + request.apiKey() + " is not currently handled in `request`, the " +
                     "code should be updated to do so.");
