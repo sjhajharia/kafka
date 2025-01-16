@@ -708,14 +708,14 @@ public class PersisterStateManager {
 
         protected void readStateErrorReponse(Errors error, Exception exception) {
             this.result.complete(new ReadShareGroupStateResponse(
-                ReadShareGroupStateResponse.toErrorResponseData(partitionKey().topicId(), partitionKey().partition(), error, "Error in find coordinator. " +
+                ReadShareGroupStateResponse.toErrorResponseData(partitionKey().topicId(), partitionKey().partition(), error, "Error in read state RPC. " +
                     (exception == null ? error.message() : exception.getMessage()))));
         }
 
         @Override
         protected void findCoordinatorErrorResponse(Errors error, Exception exception) {
             this.result.complete(new ReadShareGroupStateResponse(
-                ReadShareGroupStateResponse.toErrorResponseData(partitionKey().topicId(), partitionKey().partition(), error, "Error in read state RPC. " +
+                ReadShareGroupStateResponse.toErrorResponseData(partitionKey().topicId(), partitionKey().partition(), error, "Error in find coordinator. " +
                     (exception == null ? error.message() : exception.getMessage()))));
         }
 
@@ -849,14 +849,14 @@ public class PersisterStateManager {
 
         protected void readStateSummaryErrorReponse(Errors error, Exception exception) {
             this.result.complete(new ReadShareGroupStateSummaryResponse(
-                ReadShareGroupStateSummaryResponse.toErrorResponseData(partitionKey().topicId(), partitionKey().partition(), error, "Error in find coordinator. " +
+                ReadShareGroupStateSummaryResponse.toErrorResponseData(partitionKey().topicId(), partitionKey().partition(), error, "Error in read state summary RPC. " +
                     (exception == null ? error.message() : exception.getMessage()))));
         }
 
         @Override
         protected void findCoordinatorErrorResponse(Errors error, Exception exception) {
             this.result.complete(new ReadShareGroupStateSummaryResponse(
-                ReadShareGroupStateSummaryResponse.toErrorResponseData(partitionKey().topicId(), partitionKey().partition(), error, "Error in read state summary RPC. " +
+                ReadShareGroupStateSummaryResponse.toErrorResponseData(partitionKey().topicId(), partitionKey().partition(), error, "Error in find coordinator. " +
                     (exception == null ? error.message() : exception.getMessage()))));
         }
 
