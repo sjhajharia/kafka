@@ -10470,7 +10470,6 @@ class KafkaApisTest extends Logging {
     kafkaApis = createKafkaApis(
       overrideProperties = configOverrides,
       authorizer = Option(authorizer),
-      raftSupport = true
     )
     kafkaApis.handle(requestChannelRequest, RequestLocal.noCaching())
 
