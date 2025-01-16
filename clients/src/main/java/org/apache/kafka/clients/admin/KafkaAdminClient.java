@@ -3796,6 +3796,13 @@ public class KafkaAdminClient extends AdminClient {
                 .collect(Collectors.toMap(entry -> entry.getKey().idValue, Map.Entry::getValue)));
     }
 
+    // To do in a follow-up PR
+    @Override
+    public ListShareGroupOffsetsResult listShareGroupOffsets(final Map<String, ListShareGroupOffsetsSpec> groupSpecs,
+                                                             final ListShareGroupOffsetsOptions options) {
+        // To-do
+        return null;
+    }
     @Override
     public DescribeClassicGroupsResult describeClassicGroups(final Collection<String> groupIds,
                                                              final DescribeClassicGroupsOptions options) {

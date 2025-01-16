@@ -56,4 +56,8 @@ public class ReadShareGroupStateSummaryResult implements PersisterResult {
             return new ReadShareGroupStateSummaryResult(topicsData);
         }
     }
+
+    public List<TopicData<PartitionStateErrorData>> topicsData() {
+        return topicsData;
+    }
 }
