@@ -100,7 +100,7 @@ public class ReadShareGroupStateSummaryRequest extends AbstractRequest {
                     .setPartitions(List.of(
                             new ReadShareGroupStateSummaryResponseData.PartitionResult()
                                 .setErrorCode(error.code())
-                                .setErrorMessage(error.exceptionName())
+                                .setErrorMessage(error.message())
                         )
                     )).collect(Collectors.toList());
     }

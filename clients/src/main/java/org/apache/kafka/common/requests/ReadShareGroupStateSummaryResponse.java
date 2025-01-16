@@ -68,7 +68,12 @@ public class ReadShareGroupStateSummaryResponse extends AbstractResponse {
         );
     }
 
-    public static ReadShareGroupStateSummaryResponseData toErrorResponseData(Uuid topicId, int partitionId, Errors error, String errorMessage) {
+    public static ReadShareGroupStateSummaryResponseData toErrorResponseData(
+        Uuid topicId,
+        int partitionId,
+        Errors error,
+        String errorMessage
+    ) {
         return new ReadShareGroupStateSummaryResponseData().setResults(
             List.of(new ReadShareGroupStateSummaryResponseData.ReadStateSummaryResult()
                 .setTopicId(topicId)
@@ -78,7 +83,11 @@ public class ReadShareGroupStateSummaryResponse extends AbstractResponse {
                     .setErrorMessage(errorMessage)))));
     }
 
-    public static ReadShareGroupStateSummaryResponseData.PartitionResult toErrorResponsePartitionResult(int partitionId, Errors error, String errorMessage) {
+    public static ReadShareGroupStateSummaryResponseData.PartitionResult toErrorResponsePartitionResult(
+        int partitionId,
+        Errors error,
+        String errorMessage
+    ) {
         return new ReadShareGroupStateSummaryResponseData.PartitionResult()
             .setPartition(partitionId)
             .setErrorCode(error.code())
@@ -104,7 +113,10 @@ public class ReadShareGroupStateSummaryResponse extends AbstractResponse {
             ));
     }
 
-    public static ReadShareGroupStateSummaryResponseData.ReadStateSummaryResult toResponseReadStateSummaryResult(Uuid topicId, List<ReadShareGroupStateSummaryResponseData.PartitionResult> partitionResults) {
+    public static ReadShareGroupStateSummaryResponseData.ReadStateSummaryResult toResponseReadStateSummaryResult(
+        Uuid topicId,
+        List<ReadShareGroupStateSummaryResponseData.PartitionResult> partitionResults
+    ) {
         return new ReadShareGroupStateSummaryResponseData.ReadStateSummaryResult()
             .setTopicId(topicId)
             .setPartitions(partitionResults);

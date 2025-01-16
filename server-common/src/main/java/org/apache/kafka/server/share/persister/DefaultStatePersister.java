@@ -128,7 +128,7 @@ public class DefaultStatePersister implements Persister {
      * Takes in a list of COMPLETED futures and combines the results,
      * taking care of errors if any, into a single WriteShareGroupStateResult
      *
-     * @param futureMap - HashMap of {topic -> {part -> future}}
+     * @param futureMap - HashMap of {topic -> {partition -> future}}
      * @return Object representing combined result of type WriteShareGroupStateResult
      */
     // visible for testing
@@ -224,7 +224,7 @@ public class DefaultStatePersister implements Persister {
      * Takes in a list of COMPLETED futures and combines the results,
      * taking care of errors if any, into a single ReadShareGroupStateResult
      *
-     * @param futureMap - HashMap of {topic -> {part -> future}}
+     * @param futureMap - HashMap of {topic -> {partition -> future}}
      * @return Object representing combined result of type ReadShareGroupStateResult
      */
     // visible for testing
@@ -297,6 +297,7 @@ public class DefaultStatePersister implements Persister {
             log.error("Unable to validate read state summary request", e);
             return CompletableFuture.failedFuture(e);
         }
+
         GroupTopicPartitionData<PartitionIdLeaderEpochData> gtp = request.groupTopicPartitionData();
         String groupId = gtp.groupId();
         Map<Uuid, Map<Integer, CompletableFuture<ReadShareGroupStateSummaryResponse>>> futureMap = new HashMap<>();
@@ -339,7 +340,7 @@ public class DefaultStatePersister implements Persister {
      * Takes in a list of COMPLETED futures and combines the results,
      * taking care of errors if any, into a single ReadShareGroupStateSummaryResult
      *
-     * @param futureMap - HashMap of {topic -> {part -> future}}
+     * @param futureMap - HashMap of {topic -> {partition -> future}}
      * @return Object representing combined result of type ReadShareGroupStateSummaryResult
      */
     // visible for testing

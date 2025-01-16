@@ -20,8 +20,8 @@ package org.apache.kafka.clients.admin;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.annotation.InterfaceStability;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
@@ -36,7 +36,6 @@ public class ListShareGroupOffsetsSpec {
     private Collection<TopicPartition> topicPartitions;
 
     public ListShareGroupOffsetsSpec() {
-        topicPartitions = new ArrayList<>();
     }
 
     /**
@@ -51,7 +50,7 @@ public class ListShareGroupOffsetsSpec {
      * Returns the topic partitions whose offsets are to be listed for a share group.
      */
     public Collection<TopicPartition> topicPartitions() {
-        return topicPartitions;
+        return topicPartitions == null ? Collections.emptyList() : topicPartitions;
     }
 
     @Override
