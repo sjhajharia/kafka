@@ -1119,9 +1119,9 @@ public class PersisterStateManager {
 
         private static AbstractRequest.Builder<? extends AbstractRequest> coalesceReadSummarys(String groupId, List<? extends PersisterStateManagerHandler> handlers) {
             Map<Uuid, List<ReadShareGroupStateSummaryRequestData.PartitionData>> partitionData = new HashMap<>();
-            handlers.forEach(persHandler -> {
-                assert persHandler instanceof ReadStateSummaryHandler;
-                ReadStateSummaryHandler handler = (ReadStateSummaryHandler) persHandler;
+            handlers.forEach(persisterStateManagerHandler -> {
+                assert persisterStateManagerHandler instanceof ReadStateSummaryHandler;
+                ReadStateSummaryHandler handler = (ReadStateSummaryHandler) persisterStateManagerHandler;
                 partitionData.computeIfAbsent(handler.partitionKey().topicId(), topicId -> new LinkedList<>())
                     .add(
                         new ReadShareGroupStateSummaryRequestData.PartitionData()
@@ -1136,7 +1136,9 @@ public class PersisterStateManager {
                     .map(entry -> new ReadShareGroupStateSummaryRequestData.ReadStateSummaryData()
                         .setTopicId(entry.getKey())
                         .setPartitions(entry.getValue()))
-                    .collect(Collectors.toList())));
+                    .collect(Collectors.toList())),
+                true
+            );
         }
     }
 }

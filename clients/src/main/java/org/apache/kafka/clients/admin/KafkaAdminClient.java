@@ -3801,8 +3801,9 @@ public class KafkaAdminClient extends AdminClient {
     public ListShareGroupOffsetsResult listShareGroupOffsets(final Map<String, ListShareGroupOffsetsSpec> groupSpecs,
                                                              final ListShareGroupOffsetsOptions options) {
         // To-do
-        return null;
+        throw new InvalidRequestException("The method is not yet implemented");
     }
+
     @Override
     public DescribeClassicGroupsResult describeClassicGroups(final Collection<String> groupIds,
                                                              final DescribeClassicGroupsOptions options) {
