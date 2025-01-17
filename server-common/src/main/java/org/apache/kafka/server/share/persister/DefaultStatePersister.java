@@ -347,9 +347,9 @@ public class DefaultStatePersister implements Persister {
     ReadShareGroupStateSummaryResult readSummaryResponsesToResult(
         Map<Uuid, Map<Integer, CompletableFuture<ReadShareGroupStateSummaryResponse>>> futureMap
     ) {
-        List<TopicData<PartitionStateErrorData>> topicsData = futureMap.keySet().stream()
+        List<TopicData<PartitionStateSummaryData>> topicsData = futureMap.keySet().stream()
             .map(topicId -> {
-                List<PartitionStateErrorData> partitionStateErrorData = futureMap.get(topicId).entrySet().stream()
+                List<PartitionStateSummaryData> partitionStateErrorData = futureMap.get(topicId).entrySet().stream()
                     .map(partitionFuture -> {
                         int partition = partitionFuture.getKey();
                         CompletableFuture<ReadShareGroupStateSummaryResponse> future = partitionFuture.getValue();
@@ -357,7 +357,7 @@ public class DefaultStatePersister implements Persister {
                             // already completed because of allOf call in the caller
                             ReadShareGroupStateSummaryResponse partitionResponse = future.join();
                             return partitionResponse.data().results().get(0).partitions().stream()
-                                .map(partitionResult -> PartitionFactory.newPartitionStateErrorData(
+                                .map(partitionResult -> PartitionFactory.newPartitionStateSummaryData(
                                     partitionResult.partition(),
                                     partitionResult.stateEpoch(),
                                     partitionResult.startOffset(),
@@ -366,7 +366,7 @@ public class DefaultStatePersister implements Persister {
                                 .collect(Collectors.toList());
                         } catch (Exception e) {
                             log.error("Unexpected exception while getting data from share coordinator", e);
-                            return Collections.singletonList(PartitionFactory.newPartitionStateErrorData(
+                            return Collections.singletonList(PartitionFactory.newPartitionStateSummaryData(
                                 partition,
                                 -1,
                                 -1,

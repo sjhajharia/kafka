@@ -1058,7 +1058,7 @@ public class PersisterStateManager {
                 case READ:
                     return coalesceReads(groupId, handlers);
                 case SUMMARY:
-                    return coalesceReadSummarys(groupId, handlers);
+                    return coalesceReadSummaries(groupId, handlers);
                 default:
                     throw new RuntimeException("Unknown rpc type: " + rpcType);
             }
@@ -1117,7 +1117,7 @@ public class PersisterStateManager {
                     .collect(Collectors.toList())));
         }
 
-        private static AbstractRequest.Builder<? extends AbstractRequest> coalesceReadSummarys(String groupId, List<? extends PersisterStateManagerHandler> handlers) {
+        private static AbstractRequest.Builder<? extends AbstractRequest> coalesceReadSummaries(String groupId, List<? extends PersisterStateManagerHandler> handlers) {
             Map<Uuid, List<ReadShareGroupStateSummaryRequestData.PartitionData>> partitionData = new HashMap<>();
             handlers.forEach(persisterStateManagerHandler -> {
                 assert persisterStateManagerHandler instanceof ReadStateSummaryHandler;

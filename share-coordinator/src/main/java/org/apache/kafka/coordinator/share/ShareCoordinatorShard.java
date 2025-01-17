@@ -420,7 +420,7 @@ public class ShareCoordinatorShard implements CoordinatorShard<CoordinatorRecord
         // Only one key will be there in the request by design.
         Optional<ReadShareGroupStateSummaryResponseData> error = maybeGetReadStateSummaryError(request);
         if (error.isPresent()) {
-            return new CoordinatorResult<>(Collections.emptyList(), error.get());
+            return new CoordinatorResult<>(List.of(), error.get());
         }
 
         ReadShareGroupStateSummaryRequestData.ReadStateSummaryData topicData = request.topics().get(0);

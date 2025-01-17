@@ -635,9 +635,9 @@ public class ShareCoordinatorService implements ShareCoordinator {
 
                 ReadShareGroupStateSummaryRequestData requestForCurrentPartition = new ReadShareGroupStateSummaryRequestData()
                     .setGroupId(groupId)
-                    .setTopics(Collections.singletonList(new ReadShareGroupStateSummaryRequestData.ReadStateSummaryData()
+                    .setTopics(List.of(new ReadShareGroupStateSummaryRequestData.ReadStateSummaryData()
                         .setTopicId(topicId)
-                        .setPartitions(Collections.singletonList(partitionData))));
+                        .setPartitions(List.of(partitionData))));
 
                 CompletableFuture<ReadShareGroupStateSummaryResponseData> readFuture = runtime.scheduleWriteOperation(
                     "read-share-group-state-summary",
