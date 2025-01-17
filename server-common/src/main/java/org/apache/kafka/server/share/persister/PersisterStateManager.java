@@ -683,7 +683,7 @@ public class PersisterStateManager {
                                 log.warn("Received retriable error in read state RPC for key {}: {}", partitionKey(), error.message());
                                 if (!readStateBackoff.canAttempt()) {
                                     log.error("Exhausted max retries for read state RPC for key {} without success.", partitionKey());
-                                    readStateErrorReponse(error, new Exception("Exhausted max retries to complete read state RPC without success."));
+                                    readStateErrorResponse(error, new Exception("Exhausted max retries to complete read state RPC without success."));
                                     return;
                                 }
                                 super.resetCoordinatorNode();
@@ -692,7 +692,7 @@ public class PersisterStateManager {
 
                             default:
                                 log.error("Unable to perform read state RPC for key {}: {}", partitionKey(), error.message());
-                                readStateErrorReponse(error, null);
+                                readStateErrorResponse(error, null);
                                 return;
                         }
                     }
@@ -703,10 +703,10 @@ public class PersisterStateManager {
             IllegalStateException exception = new IllegalStateException(
                 "Failed to read state for share partition " + partitionKey()
             );
-            readStateErrorReponse(Errors.forException(exception), exception);
+            readStateErrorResponse(Errors.forException(exception), exception);
         }
 
-        protected void readStateErrorReponse(Errors error, Exception exception) {
+        protected void readStateErrorResponse(Errors error, Exception exception) {
             this.result.complete(new ReadShareGroupStateResponse(
                 ReadShareGroupStateResponse.toErrorResponseData(partitionKey().topicId(), partitionKey().partition(), error, "Error in read state RPC. " +
                     (exception == null ? error.message() : exception.getMessage()))));
@@ -824,7 +824,7 @@ public class PersisterStateManager {
                                 log.warn("Received retriable error in read state summary RPC for key {}: {}", partitionKey(), error.message());
                                 if (!readStateSummaryBackoff.canAttempt()) {
                                     log.error("Exhausted max retries for read state summary RPC for key {} without success.", partitionKey());
-                                    readStateSummaryErrorReponse(error, new Exception("Exhausted max retries to complete read state summary RPC without success."));
+                                    readStateSummaryErrorResponse(error, new Exception("Exhausted max retries to complete read state summary RPC without success."));
                                     return;
                                 }
                                 super.resetCoordinatorNode();
@@ -833,7 +833,7 @@ public class PersisterStateManager {
 
                             default:
                                 log.error("Unable to perform read state summary RPC for key {}: {}", partitionKey(), error.message());
-                                readStateSummaryErrorReponse(error, null);
+                                readStateSummaryErrorResponse(error, null);
                                 return;
                         }
                     }
@@ -844,10 +844,10 @@ public class PersisterStateManager {
             IllegalStateException exception = new IllegalStateException(
                 "Failed to read state summary for share partition " + partitionKey()
             );
-            readStateSummaryErrorReponse(Errors.forException(exception), exception);
+            readStateSummaryErrorResponse(Errors.forException(exception), exception);
         }
 
-        protected void readStateSummaryErrorReponse(Errors error, Exception exception) {
+        protected void readStateSummaryErrorResponse(Errors error, Exception exception) {
             this.result.complete(new ReadShareGroupStateSummaryResponse(
                 ReadShareGroupStateSummaryResponse.toErrorResponseData(partitionKey().topicId(), partitionKey().partition(), error, "Error in read state summary RPC. " +
                     (exception == null ? error.message() : exception.getMessage()))));
