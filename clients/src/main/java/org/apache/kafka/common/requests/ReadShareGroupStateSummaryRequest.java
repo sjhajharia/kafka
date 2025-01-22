@@ -87,4 +87,25 @@ public class ReadShareGroupStateSummaryRequest extends AbstractRequest {
             version
         );
     }
+
+    public static List<ReadShareGroupStateSummaryResponseData.ReadStateSummaryResult> getErrorReadShareGroupStateSummary(
+        List<ReadShareGroupStateSummaryRequestData.ReadStateSummaryData> topics,
+        Errors error
+    ) {
+        return topics.stream()
+            .map(
+                requestTopic -> new ReadShareGroupStateSummaryResponseData.ReadStateSummaryResult()
+                    .setTopicId(requestTopic.topicId())
+                    .setPartitions(
+                        requestTopic.partitions().stream().map(
+                            partition -> new ReadShareGroupStateSummaryResponseData.PartitionResult()
+                                .setPartition(partition.partition())
+                                .setErrorCode(error.code())
+                                .setErrorMessage(error.message())
+                                .setStartOffset(0)
+                                .setStateEpoch(0)
+                        ).collect(Collectors.toList())
+                    )
+            ).collect(Collectors.toList());
+    }
 }

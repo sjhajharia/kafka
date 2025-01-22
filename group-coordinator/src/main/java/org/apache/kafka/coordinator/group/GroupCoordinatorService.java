@@ -40,6 +40,8 @@ import org.apache.kafka.common.message.OffsetDeleteRequestData;
 import org.apache.kafka.common.message.OffsetDeleteResponseData;
 import org.apache.kafka.common.message.OffsetFetchRequestData;
 import org.apache.kafka.common.message.OffsetFetchResponseData;
+import org.apache.kafka.common.message.ReadShareGroupStateSummaryRequestData;
+import org.apache.kafka.common.message.ReadShareGroupStateSummaryResponseData;
 import org.apache.kafka.common.message.ShareGroupDescribeResponseData;
 import org.apache.kafka.common.message.ShareGroupDescribeResponseData.DescribedGroup;
 import org.apache.kafka.common.message.ShareGroupHeartbeatRequestData;
@@ -54,6 +56,7 @@ import org.apache.kafka.common.requests.ConsumerGroupDescribeRequest;
 import org.apache.kafka.common.requests.DeleteGroupsRequest;
 import org.apache.kafka.common.requests.DescribeGroupsRequest;
 import org.apache.kafka.common.requests.OffsetCommitRequest;
+import org.apache.kafka.common.requests.ReadShareGroupStateSummaryRequest;
 import org.apache.kafka.common.requests.RequestContext;
 import org.apache.kafka.common.requests.ShareGroupDescribeRequest;
 import org.apache.kafka.common.requests.TransactionResult;
@@ -75,6 +78,8 @@ import org.apache.kafka.coordinator.group.metrics.GroupCoordinatorMetrics;
 import org.apache.kafka.image.MetadataDelta;
 import org.apache.kafka.image.MetadataImage;
 import org.apache.kafka.server.record.BrokerCompressionType;
+import org.apache.kafka.server.share.persister.Persister;
+import org.apache.kafka.server.share.persister.ReadShareGroupStateSummaryParameters;
 import org.apache.kafka.server.util.FutureUtils;
 import org.apache.kafka.server.util.timer.Timer;
 
@@ -114,6 +119,7 @@ public class GroupCoordinatorService implements GroupCoordinator {
         private CoordinatorRuntimeMetrics coordinatorRuntimeMetrics;
         private GroupCoordinatorMetrics groupCoordinatorMetrics;
         private GroupConfigManager groupConfigManager;
+        private Persister persister;
 
         public Builder(
             int nodeId,
@@ -158,6 +164,12 @@ public class GroupCoordinatorService implements GroupCoordinator {
             return this;
         }
 
+        public Builder withPersister(Persister persister) {
+            this.persister = persister;
+            return this;
+        }
+
+        @SuppressWarnings("NPathComplexity")
         public GroupCoordinatorService build() {
             if (config == null)
                 throw new IllegalArgumentException("Config must be set.");
@@ -175,6 +187,8 @@ public class GroupCoordinatorService implements GroupCoordinator {
                 throw new IllegalArgumentException("GroupCoordinatorMetrics must be set.");
             if (groupConfigManager == null)
                 throw new IllegalArgumentException("GroupConfigManager must be set.");
+            if (persister == null)
+                throw new IllegalArgumentException("Persister must be set.");
 
             String logPrefix = String.format("GroupCoordinator id=%d", nodeId);
             LogContext logContext = new LogContext(String.format("[%s] ", logPrefix));
@@ -214,7 +228,8 @@ public class GroupCoordinatorService implements GroupCoordinator {
                 config,
                 runtime,
                 groupCoordinatorMetrics,
-                groupConfigManager
+                groupConfigManager,
+                persister
             );
         }
     }
@@ -245,6 +260,11 @@ public class GroupCoordinatorService implements GroupCoordinator {
     private final GroupConfigManager groupConfigManager;
 
     /**
+     * The Persister to persist the state of GC
+     */
+    private final Persister persister;
+
+    /**
      * Boolean indicating whether the coordinator is active or not.
      */
     private final AtomicBoolean isActive = new AtomicBoolean(false);
@@ -262,19 +282,22 @@ public class GroupCoordinatorService implements GroupCoordinator {
      * @param runtime                   The runtime.
      * @param groupCoordinatorMetrics   The group coordinator metrics.
      * @param groupConfigManager        The group config manager.
+     * @param persister                 The persister
      */
     GroupCoordinatorService(
         LogContext logContext,
         GroupCoordinatorConfig config,
         CoordinatorRuntime<GroupCoordinatorShard, CoordinatorRecord> runtime,
         GroupCoordinatorMetrics groupCoordinatorMetrics,
-        GroupConfigManager groupConfigManager
+        GroupConfigManager groupConfigManager,
+        Persister persister
     ) {
         this.log = logContext.logger(GroupCoordinatorService.class);
         this.config = config;
         this.runtime = runtime;
         this.groupCoordinatorMetrics = groupCoordinatorMetrics;
         this.groupConfigManager = groupConfigManager;
+        this.persister = persister;
     }
 
     /**
@@ -933,6 +956,53 @@ public class GroupCoordinatorService implements GroupCoordinator {
                 (coordinator, offset) -> coordinator.fetchAllOffsets(request, offset)
             );
         }
+    }
+
+    /**
+     * See {@link GroupCoordinator#describeShareGroupOffsets(RequestContext, ReadShareGroupStateSummaryRequestData)}.
+     */
+    @Override
+    public CompletableFuture<ReadShareGroupStateSummaryResponseData> describeShareGroupOffsets(
+        RequestContext context,
+        ReadShareGroupStateSummaryRequestData requestData
+    ) {
+        if (!isActive.get()) {
+            return CompletableFuture.completedFuture(
+                new ReadShareGroupStateSummaryResponseData()
+                    .setResults(ReadShareGroupStateSummaryRequest.getErrorReadShareGroupStateSummary(
+                        requestData.topics(),
+                        Errors.COORDINATOR_NOT_AVAILABLE
+                    ))
+            );
+        }
+        CompletableFuture<ReadShareGroupStateSummaryResponseData> future = new CompletableFuture<>();
+        persister.readSummary(ReadShareGroupStateSummaryParameters.from(requestData))
+            .whenComplete((result, error) -> {
+                if (error != null) {
+                    log.error("Failed to read summary of the share partition");
+                    future.completeExceptionally(error);
+                    return;
+                }
+                if (result == null || result.topicsData() == null || result.topicsData().isEmpty()) {
+                    log.error("Result is null for the read state summary");
+                    future.completeExceptionally(new IllegalStateException("Result is null for the read state summary"));
+                    return;
+                }
+                List<ReadShareGroupStateSummaryResponseData.ReadStateSummaryResult> summaryResult = result.topicsData().stream().map(
+                    topicData -> new ReadShareGroupStateSummaryResponseData.ReadStateSummaryResult()
+                        .setTopicId(topicData.topicId())
+                        .setPartitions(topicData.partitions().stream().map(
+                            partitionData -> new ReadShareGroupStateSummaryResponseData.PartitionResult()
+                                .setPartition(partitionData.partition())
+                                .setStateEpoch(partitionData.stateEpoch())
+                                .setStartOffset(partitionData.startOffset())
+                                .setErrorMessage(partitionData.errorMessage())
+                                .setErrorCode(partitionData.errorCode())
+                        ).toList())
+                ).toList();
+                future.complete(new ReadShareGroupStateSummaryResponseData().setResults(summaryResult));
+            });
+        return future;
     }
 
     /**

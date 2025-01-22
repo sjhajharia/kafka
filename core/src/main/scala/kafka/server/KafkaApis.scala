@@ -34,12 +34,14 @@ import org.apache.kafka.common.internals.Topic.{GROUP_METADATA_TOPIC_NAME, SHARE
 import org.apache.kafka.common.internals.{FatalExitError, Topic}
 import org.apache.kafka.common.message.AddPartitionsToTxnResponseData.{AddPartitionsToTxnResult, AddPartitionsToTxnResultCollection}
 import org.apache.kafka.common.message.DeleteRecordsResponseData.{DeleteRecordsPartitionResult, DeleteRecordsTopicResult}
+import org.apache.kafka.common.message.DescribeShareGroupOffsetsResponseData.{DescribeShareGroupOffsetsResponsePartition, DescribeShareGroupOffsetsResponseTopic}
 import org.apache.kafka.common.message.ListClientMetricsResourcesResponseData.ClientMetricsResource
 import org.apache.kafka.common.message.ListOffsetsRequestData.ListOffsetsPartition
 import org.apache.kafka.common.message.ListOffsetsResponseData.{ListOffsetsPartitionResponse, ListOffsetsTopicResponse}
 import org.apache.kafka.common.message.MetadataResponseData.{MetadataResponsePartition, MetadataResponseTopic}
 import org.apache.kafka.common.message.OffsetForLeaderEpochRequestData.OffsetForLeaderTopic
 import org.apache.kafka.common.message.OffsetForLeaderEpochResponseData.{EpochEndOffset, OffsetForLeaderTopicResult, OffsetForLeaderTopicResultCollection}
+import org.apache.kafka.common.message.ReadShareGroupStateSummaryRequestData.{PartitionData, ReadStateSummaryData}
 import org.apache.kafka.common.message._
 import org.apache.kafka.common.metrics.Metrics
 import org.apache.kafka.common.network.ListenerName
@@ -3190,9 +3192,87 @@ class KafkaApis(val requestChannel: RequestChannel,
 
   def handleDescribeShareGroupOffsetsRequest(request: RequestChannel.Request): Unit = {
     val describeShareGroupOffsetsRequest = request.body[DescribeShareGroupOffsetsRequest]
-    // TODO: Implement the DescribeShareGroupOffsetsRequest handling
-    requestHelper.sendMaybeThrottle(request, describeShareGroupOffsetsRequest.getErrorResponse(Errors.UNSUPPORTED_VERSION.exception))
-    CompletableFuture.completedFuture[Unit](())
+
+    if (!isShareGroupProtocolEnabled) {
+      requestHelper.sendMaybeThrottle(request, describeShareGroupOffsetsRequest.getErrorResponse(Errors.UNSUPPORTED_VERSION.exception))
+      CompletableFuture.completedFuture[Unit](())
+    } else if (!authHelper.authorize(request.context, READ, GROUP, describeShareGroupOffsetsRequest.data.groupId)) {
+      requestHelper.sendMaybeThrottle(request, describeShareGroupOffsetsRequest.getErrorResponse(Errors.GROUP_AUTHORIZATION_FAILED.exception))
+      CompletableFuture.completedFuture[Unit](())
+    } else {
+      val topicNamesToIds = metadataCache.topicNamesToIds()
+      val topicIdToNames = metadataCache.topicIdsToNames()
+
+      val readStateSummaryData = getReadShareGroupStateSummaryRequestFromDescribeShareGroupOffsetsRequest(
+        describeShareGroupOffsetsRequest.data(),
+        topicNamesToIds
+      )
+      groupCoordinator.describeShareGroupOffsets(
+        request.context,
+        readStateSummaryData,
+      ).handle[Unit] { (response, exception) =>
+        if (exception != null) {
+          requestHelper.sendMaybeThrottle(request, describeShareGroupOffsetsRequest.getErrorResponse(exception))
+        } else {
+          requestHelper.sendMaybeThrottle(
+            request,
+            new DescribeShareGroupOffsetsResponse(
+              getDescribeShareGroupOffsetsResponseFromReadShareGroupStateSummaryResponse(response, topicIdToNames)
+            )
+          )
+        }
+      }
+    }
+  }
+
+  private def getReadShareGroupStateSummaryRequestFromDescribeShareGroupOffsetsRequest(describeShareGroupOffsetsRequestData: DescribeShareGroupOffsetsRequestData,
+                                                                                       topicNamesId: util.Map[String, Uuid]
+                                                                                      ): ReadShareGroupStateSummaryRequestData = {
+    val readStateSummaryTopics = describeShareGroupOffsetsRequestData.topics.asScala.map(
+      topic => {
+        val partitions = topic.partitions.asScala.map(
+          partitionIndex => {
+            new PartitionData()
+              .setPartition(partitionIndex)
+              .setLeaderEpoch(0)
+          }
+        ).asJava
+        new ReadStateSummaryData()
+          .setTopicId(topicNamesId.get(topic.topicName()))
+          .setPartitions(partitions)
+      }
+    ).asJava
+
+    val result = new ReadShareGroupStateSummaryRequestData()
+      .setGroupId(describeShareGroupOffsetsRequestData.groupId())
+      .setTopics(readStateSummaryTopics)
+    result
+  }
+
+  private def getDescribeShareGroupOffsetsResponseFromReadShareGroupStateSummaryResponse(readShareGroupStateSummaryResponseData: ReadShareGroupStateSummaryResponseData,
+                                                                                         topicIdNames: util.Map[Uuid, String]
+                                                                                        ): DescribeShareGroupOffsetsResponseData = {
+    val describeShareGroupOffsetsResponseData = readShareGroupStateSummaryResponseData.results().asScala.map(
+      readStateSummaryResult => {
+        val partitions = readStateSummaryResult.partitions().asScala.map(
+          partitionResult => {
+            new DescribeShareGroupOffsetsResponsePartition()
+              .setPartitionIndex(partitionResult.partition())
+              .setStartOffset(partitionResult.startOffset())
+              .setLeaderEpoch(partitionResult.stateEpoch())
+              .setErrorCode(partitionResult.errorCode())
+              .setErrorMessage(partitionResult.errorMessage())
+          }
+        ).asJava
+        new DescribeShareGroupOffsetsResponseTopic()
+          .setTopicId(readStateSummaryResult.topicId())
+          .setTopicName(topicIdNames.get(readStateSummaryResult.topicId()))
+          .setPartitions(partitions)
+      }
+    ).asJava
+
+    val result = new DescribeShareGroupOffsetsResponseData().setResponses(describeShareGroupOffsetsResponseData)
+    result
   }
 
   // Visible for Testing

@@ -18,6 +18,7 @@ package org.apache.kafka.coordinator.group;
 
 import org.apache.kafka.clients.consumer.internals.ConsumerProtocol;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.Uuid;
 import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.common.errors.CoordinatorLoadInProgressException;
 import org.apache.kafka.common.errors.CoordinatorNotAvailableException;
@@ -50,6 +51,8 @@ import org.apache.kafka.common.message.OffsetDeleteRequestData;
 import org.apache.kafka.common.message.OffsetDeleteResponseData;
 import org.apache.kafka.common.message.OffsetFetchRequestData;
 import org.apache.kafka.common.message.OffsetFetchResponseData;
+import org.apache.kafka.common.message.ReadShareGroupStateSummaryRequestData;
+import org.apache.kafka.common.message.ReadShareGroupStateSummaryResponseData;
 import org.apache.kafka.common.message.ShareGroupDescribeResponseData;
 import org.apache.kafka.common.message.ShareGroupHeartbeatRequestData;
 import org.apache.kafka.common.message.ShareGroupHeartbeatResponseData;
@@ -73,6 +76,12 @@ import org.apache.kafka.coordinator.common.runtime.CoordinatorRecord;
 import org.apache.kafka.coordinator.common.runtime.CoordinatorRuntime;
 import org.apache.kafka.coordinator.group.metrics.GroupCoordinatorMetrics;
 import org.apache.kafka.server.record.BrokerCompressionType;
+import org.apache.kafka.server.share.persister.DefaultStatePersister;
+import org.apache.kafka.server.share.persister.NoOpShareStatePersister;
+import org.apache.kafka.server.share.persister.PartitionFactory;
+import org.apache.kafka.server.share.persister.Persister;
+import org.apache.kafka.server.share.persister.ReadShareGroupStateSummaryParameters;
+import org.apache.kafka.server.share.persister.ReadShareGroupStateSummaryResult;
 import org.apache.kafka.server.util.FutureUtils;
 
 import org.junit.jupiter.api.Test;
@@ -137,7 +146,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         service.startup(() -> 1);
@@ -154,7 +164,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         ConsumerGroupHeartbeatRequestData request = new ConsumerGroupHeartbeatRequestData()
@@ -180,7 +191,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         ConsumerGroupHeartbeatRequestData request = new ConsumerGroupHeartbeatRequestData()
@@ -232,7 +244,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         ConsumerGroupHeartbeatRequestData request = new ConsumerGroupHeartbeatRequestData()
@@ -268,7 +281,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         assertThrows(CoordinatorNotAvailableException.class,
@@ -287,7 +301,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         Properties expectedProperties = new Properties();
@@ -306,7 +321,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         assertThrows(CoordinatorNotAvailableException.class,
@@ -329,7 +345,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         assertThrows(CoordinatorNotAvailableException.class,
@@ -352,7 +369,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         service.startup(() -> 1);
@@ -372,7 +390,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         JoinGroupRequestData request = new JoinGroupRequestData()
@@ -407,7 +426,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         JoinGroupRequestData request = new JoinGroupRequestData()
@@ -444,7 +464,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         service.startup(() -> 1);
@@ -491,7 +512,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         JoinGroupRequestData request = new JoinGroupRequestData()
@@ -520,7 +542,8 @@ public class GroupCoordinatorServiceTest {
             config,
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         service.startup(() -> 1);
 
@@ -551,7 +574,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         SyncGroupRequestData request = new SyncGroupRequestData()
@@ -585,7 +609,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         SyncGroupRequestData request = new SyncGroupRequestData()
@@ -622,7 +647,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         service.startup(() -> 1);
@@ -652,7 +678,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         SyncGroupRequestData request = new SyncGroupRequestData()
@@ -679,7 +706,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         HeartbeatRequestData request = new HeartbeatRequestData()
@@ -713,7 +741,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         HeartbeatRequestData request = new HeartbeatRequestData()
@@ -747,7 +776,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         HeartbeatRequestData request = new HeartbeatRequestData()
@@ -784,7 +814,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         HeartbeatRequestData request = new HeartbeatRequestData()
@@ -810,7 +841,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         service.startup(() -> 3);
 
@@ -858,7 +890,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         service.startup(() -> 3);
 
@@ -901,7 +934,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         service.startup(() -> 3);
 
@@ -934,7 +968,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         int partitionCount = 0;
         service.startup(() -> partitionCount);
@@ -960,7 +995,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         ListGroupsRequestData request = new ListGroupsRequestData();
@@ -985,7 +1021,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             mock(GroupCoordinatorMetrics.class),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         int partitionCount = 2;
         service.startup(() -> partitionCount);
@@ -1028,7 +1065,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             mock(GroupCoordinatorMetrics.class),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         int partitionCount = 1;
         service.startup(() -> partitionCount);
@@ -1062,7 +1100,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             mock(GroupCoordinatorMetrics.class),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         int partitionCount = 1;
         service.startup(() -> partitionCount);
@@ -1095,7 +1134,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         CompletableFuture<List<DescribeGroupsResponseData.DescribedGroup>> future = service.describeGroups(
@@ -1129,7 +1169,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         service.startup(() -> 1);
@@ -1196,7 +1237,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         OffsetFetchRequestData.OffsetFetchRequestGroup request =
@@ -1249,7 +1291,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         service.startup(() -> 1);
@@ -1295,7 +1338,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         LeaveGroupRequestData request = new LeaveGroupRequestData()
@@ -1329,7 +1373,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         LeaveGroupRequestData request = new LeaveGroupRequestData()
@@ -1384,7 +1429,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         LeaveGroupRequestData request = new LeaveGroupRequestData()
@@ -1410,7 +1456,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         int partitionCount = 2;
         service.startup(() -> partitionCount);
@@ -1453,7 +1500,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         int partitionCount = 1;
         service.startup(() -> partitionCount);
@@ -1488,7 +1536,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         int partitionCount = 1;
         service.startup(() -> partitionCount);
@@ -1521,7 +1570,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         when(runtime.scheduleReadOperation(
             ArgumentMatchers.eq("consumer-group-describe"),
@@ -1551,7 +1601,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             mock(GroupCoordinatorMetrics.class),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         service.startup(() -> 1);
 
@@ -1603,7 +1654,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             mock(GroupCoordinatorMetrics.class),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         service.startup(() -> 1);
 
@@ -1650,7 +1702,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             mock(GroupCoordinatorMetrics.class),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         service.startup(() -> 1);
 
@@ -1694,7 +1747,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         OffsetDeleteRequestData request = new OffsetDeleteRequestData()
@@ -1721,7 +1775,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             mock(GroupCoordinatorMetrics.class),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         service.startup(() -> 3);
 
@@ -1795,7 +1850,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             mock(GroupCoordinatorMetrics.class),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         service.startup(() -> 1);
 
@@ -1831,7 +1887,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             mock(GroupCoordinatorMetrics.class),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         CompletableFuture<DeleteGroupsResponseData.DeletableGroupResultCollection> future = service.deleteGroups(
@@ -1859,7 +1916,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         TxnOffsetCommitRequestData request = new TxnOffsetCommitRequestData()
@@ -1900,7 +1958,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         service.startup(() -> 1);
 
@@ -1941,7 +2000,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         service.startup(() -> 1);
 
@@ -2000,7 +2060,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         service.startup(() -> 1);
 
@@ -2052,7 +2113,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         service.startup(() -> 1);
 
@@ -2086,7 +2148,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         CompletableFuture<Void> future = service.completeTransaction(
@@ -2109,7 +2172,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         service.startup(() -> 1);
 
@@ -2133,7 +2197,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         service.startup(() -> 3);
 
@@ -2164,7 +2229,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         assertThrows(CoordinatorNotAvailableException.class, () -> service.onPartitionsDeleted(
@@ -2181,7 +2247,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         ShareGroupHeartbeatRequestData request = new ShareGroupHeartbeatRequestData()
@@ -2203,7 +2270,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         ShareGroupHeartbeatRequestData request = new ShareGroupHeartbeatRequestData()
@@ -2241,7 +2309,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
 
         ShareGroupHeartbeatRequestData request = new ShareGroupHeartbeatRequestData()
@@ -2277,7 +2346,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         int partitionCount = 2;
         service.startup(() -> partitionCount);
@@ -2320,7 +2390,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         int partitionCount = 1;
         service.startup(() -> partitionCount);
@@ -2355,7 +2426,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         int partitionCount = 1;
         service.startup(() -> partitionCount);
@@ -2388,7 +2460,8 @@ public class GroupCoordinatorServiceTest {
             createConfig(),
             runtime,
             new GroupCoordinatorMetrics(),
-            createConfigManager()
+            createConfigManager(),
+            new NoOpShareStatePersister()
         );
         when(runtime.scheduleReadOperation(
             ArgumentMatchers.eq("share-group-describe"),
@@ -2409,4 +2482,100 @@ public class GroupCoordinatorServiceTest {
             future.get()
         );
     }
+
+    @Test
+    public void testDescribeShareGroupOffsetsWithNoOpPersister() throws InterruptedException, ExecutionException {
+        CoordinatorRuntime<GroupCoordinatorShard, CoordinatorRecord> runtime = mockRuntime();
+        GroupCoordinatorService service = new GroupCoordinatorService(
+            new LogContext(),
+            createConfig(),
+            runtime,
+            new GroupCoordinatorMetrics(),
+            createConfigManager(),
+            new NoOpShareStatePersister()
+        );
+        service.startup(() -> 1);
+
+        Uuid topicId = Uuid.randomUuid();
+        int partition = 1;
+        int leaderEpoch = 0;
+        ReadShareGroupStateSummaryRequestData requestData = new ReadShareGroupStateSummaryRequestData()
+            .setGroupId("share-group-id")
+            .setTopics(List.of(new ReadShareGroupStateSummaryRequestData.ReadStateSummaryData()
+                .setTopicId(topicId)
+                .setPartitions(List.of(new ReadShareGroupStateSummaryRequestData.PartitionData()
+                    .setPartition(partition)
+                    .setLeaderEpoch(leaderEpoch)))
+            ));
+
+        ReadShareGroupStateSummaryResponseData responseData = new ReadShareGroupStateSummaryResponseData()
+            .setResults(
+                List.of(new ReadShareGroupStateSummaryResponseData.ReadStateSummaryResult()
+                    .setTopicId(topicId)
+                    .setPartitions(List.of(new ReadShareGroupStateSummaryResponseData.PartitionResult()
+                        .setPartition(partition)
+                        .setStartOffset(PartitionFactory.UNINITIALIZED_START_OFFSET)
+                        .setStateEpoch(PartitionFactory.DEFAULT_STATE_EPOCH)
+                        .setErrorCode(PartitionFactory.DEFAULT_ERROR_CODE)
+                        .setErrorMessage(PartitionFactory.DEFAULT_ERR_MESSAGE)))
+                )
+            );
+
+        CompletableFuture<ReadShareGroupStateSummaryResponseData> future =
+            service.describeShareGroupOffsets(requestContext(ApiKeys.READ_SHARE_GROUP_STATE_SUMMARY), requestData);
+
+        assertEquals(responseData, future.get());
+    }
+
+    @Test
+    public void testDescribeShareGroupOffsetsWithDefaultPersister() throws InterruptedException, ExecutionException {
+        CoordinatorRuntime<GroupCoordinatorShard, CoordinatorRecord> runtime = mockRuntime();
+        Persister persister = mock(DefaultStatePersister.class);
+        GroupCoordinatorService service = new GroupCoordinatorService(
+            new LogContext(),
+            createConfig(),
+            runtime,
+            new GroupCoordinatorMetrics(),
+            createConfigManager(),
+            persister
+        );
+        service.startup(() -> 1);
+
+        Uuid topicId = Uuid.randomUuid();
+        int partition = 1;
+        int leaderEpoch = 0;
+        ReadShareGroupStateSummaryRequestData requestData = new ReadShareGroupStateSummaryRequestData()
+            .setGroupId("share-group-id")
+            .setTopics(List.of(new ReadShareGroupStateSummaryRequestData.ReadStateSummaryData()
+                .setTopicId(topicId)
+                .setPartitions(List.of(new ReadShareGroupStateSummaryRequestData.PartitionData()
+                    .setPartition(partition)
+                    .setLeaderEpoch(leaderEpoch)))
+            ));
+
+        ReadShareGroupStateSummaryResponseData responseData = new ReadShareGroupStateSummaryResponseData()
+            .setResults(
+                List.of(new ReadShareGroupStateSummaryResponseData.ReadStateSummaryResult()
+                    .setTopicId(topicId)
+                    .setPartitions(List.of(new ReadShareGroupStateSummaryResponseData.PartitionResult()
+                        .setPartition(partition)
+                        .setStartOffset(21)
+                        .setStateEpoch(1)
+                        .setErrorCode(Errors.NONE.code())
+                        .setErrorMessage(Errors.NONE.message())))
+                )
+            );
+
+        ReadShareGroupStateSummaryParameters readShareGroupStateSummaryParameters = ReadShareGroupStateSummaryParameters.from(requestData);
+        ReadShareGroupStateSummaryResult readShareGroupStateSummaryResult = ReadShareGroupStateSummaryResult.from(responseData);
+        when(persister.readSummary(
+            ArgumentMatchers.eq(readShareGroupStateSummaryParameters)
+            )).thenReturn(CompletableFuture.completedFuture(readShareGroupStateSummaryResult));
+
+        CompletableFuture<ReadShareGroupStateSummaryResponseData> future =
+            service.describeShareGroupOffsets(requestContext(ApiKeys.READ_SHARE_GROUP_STATE_SUMMARY), requestData);
+
+        assertEquals(responseData, future.get());
+    }
+
 }
