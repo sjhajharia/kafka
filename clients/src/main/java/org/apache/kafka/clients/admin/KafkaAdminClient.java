@@ -52,6 +52,7 @@ import org.apache.kafka.clients.admin.internals.DeleteRecordsHandler;
 import org.apache.kafka.clients.admin.internals.DescribeClassicGroupsHandler;
 import org.apache.kafka.clients.admin.internals.DescribeConsumerGroupsHandler;
 import org.apache.kafka.clients.admin.internals.DescribeProducersHandler;
+import org.apache.kafka.clients.admin.internals.DescribeShareGroupOffsetsHandler;
 import org.apache.kafka.clients.admin.internals.DescribeShareGroupsHandler;
 import org.apache.kafka.clients.admin.internals.DescribeTransactionsHandler;
 import org.apache.kafka.clients.admin.internals.FenceProducersHandler;
@@ -3796,12 +3797,14 @@ public class KafkaAdminClient extends AdminClient {
                 .collect(Collectors.toMap(entry -> entry.getKey().idValue, Map.Entry::getValue)));
     }
 
-    // To do in a follow-up PR
     @Override
     public ListShareGroupOffsetsResult listShareGroupOffsets(final Map<String, ListShareGroupOffsetsSpec> groupSpecs,
                                                              final ListShareGroupOffsetsOptions options) {
-        // To-do
-        throw new InvalidRequestException("The method is not yet implemented");
+        SimpleAdminApiFuture<CoordinatorKey, Map<TopicPartition, Long>> future =
+            DescribeShareGroupOffsetsHandler.newFuture(groupSpecs.keySet());
+        DescribeShareGroupOffsetsHandler handler = new DescribeShareGroupOffsetsHandler(groupSpecs, logContext);
+        invokeDriver(handler, future, options.timeoutMs);
+        return new ListShareGroupOffsetsResult(future.all());
     }
 
     @Override
