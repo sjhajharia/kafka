@@ -2522,7 +2522,7 @@ public class GroupCoordinatorServiceTest {
             );
 
         CompletableFuture<ReadShareGroupStateSummaryResponseData> future =
-            service.describeShareGroupOffsets(requestContext(ApiKeys.READ_SHARE_GROUP_STATE_SUMMARY), requestData);
+            service.describeShareGroupOffsets(requestContext(ApiKeys.DESCRIBE_SHARE_GROUP_OFFSETS), requestData);
 
         assertEquals(responseData, future.get());
     }
@@ -2573,9 +2573,51 @@ public class GroupCoordinatorServiceTest {
             )).thenReturn(CompletableFuture.completedFuture(readShareGroupStateSummaryResult));
 
         CompletableFuture<ReadShareGroupStateSummaryResponseData> future =
-            service.describeShareGroupOffsets(requestContext(ApiKeys.READ_SHARE_GROUP_STATE_SUMMARY), requestData);
+            service.describeShareGroupOffsets(requestContext(ApiKeys.DESCRIBE_SHARE_GROUP_OFFSETS), requestData);
 
         assertEquals(responseData, future.get());
     }
 
+    @Test
+    public void testDescribeShareGroupOffsetsCoordinatorNotActive() throws ExecutionException, InterruptedException {
+        CoordinatorRuntime<GroupCoordinatorShard, CoordinatorRecord> runtime = mockRuntime();
+        GroupCoordinatorService service = new GroupCoordinatorService(
+            new LogContext(),
+            createConfig(),
+            runtime,
+            new GroupCoordinatorMetrics(),
+            createConfigManager(),
+            new NoOpShareStatePersister()
+        );
+
+        Uuid topicId = Uuid.randomUuid();
+        int partition = 1;
+        int leaderEpoch = 0;
+        ReadShareGroupStateSummaryRequestData requestData = new ReadShareGroupStateSummaryRequestData()
+            .setGroupId("share-group-id")
+            .setTopics(List.of(new ReadShareGroupStateSummaryRequestData.ReadStateSummaryData()
+                .setTopicId(topicId)
+                .setPartitions(List.of(new ReadShareGroupStateSummaryRequestData.PartitionData()
+                    .setPartition(partition)
+                    .setLeaderEpoch(leaderEpoch)))
+            ));
+
+        ReadShareGroupStateSummaryResponseData responseData = new ReadShareGroupStateSummaryResponseData()
+            .setResults(
+                List.of(new ReadShareGroupStateSummaryResponseData.ReadStateSummaryResult()
+                    .setTopicId(topicId)
+                    .setPartitions(List.of(new ReadShareGroupStateSummaryResponseData.PartitionResult()
+                        .setPartition(partition)
+                        .setStartOffset(0)
+                        .setStateEpoch(0)
+                        .setErrorCode(Errors.COORDINATOR_NOT_AVAILABLE.code())
+                        .setErrorMessage(Errors.COORDINATOR_NOT_AVAILABLE.message())))
+                )
+            );
+
+        CompletableFuture<ReadShareGroupStateSummaryResponseData> future =
+            service.describeShareGroupOffsets(requestContext(ApiKeys.DESCRIBE_SHARE_GROUP_OFFSETS), requestData);
+
+        assertEquals(responseData, future.get());
+    }
 }
