@@ -37,9 +37,18 @@ public class ListShareGroupOffsetsResult {
 
     private final Map<String, KafkaFuture<Map<TopicPartition, Long>>> futures;
 
-    public ListShareGroupOffsetsResult(final Map<CoordinatorKey, KafkaFuture<Map<TopicPartition, Long>>> futures) {
+    ListShareGroupOffsetsResult(final Map<CoordinatorKey, KafkaFuture<Map<TopicPartition, Long>>> futures) {
         this.futures = futures.entrySet().stream()
             .collect(Collectors.toMap(e -> e.getKey().idValue, Map.Entry::getValue));
+    }
+
+    public static ListShareGroupOffsetsResult createListShareGroupOffsetsResult(Map<String, KafkaFuture<Map<TopicPartition, Long>>> groupOffsets) {
+        Map<CoordinatorKey, KafkaFuture<Map<TopicPartition, Long>>> coordinatorFutures = groupOffsets.entrySet().stream()
+            .collect(Collectors.toMap(
+                entry -> CoordinatorKey.byGroupId(entry.getKey()),
+                Map.Entry::getValue
+            ));
+        return new ListShareGroupOffsetsResult(coordinatorFutures);
     }
 
     /**

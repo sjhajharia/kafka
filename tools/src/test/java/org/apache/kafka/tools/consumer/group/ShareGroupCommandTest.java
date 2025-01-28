@@ -28,7 +28,6 @@ import org.apache.kafka.clients.admin.MockAdminClient;
 import org.apache.kafka.clients.admin.ShareGroupDescription;
 import org.apache.kafka.clients.admin.ShareMemberAssignment;
 import org.apache.kafka.clients.admin.ShareMemberDescription;
-import org.apache.kafka.clients.admin.internals.CoordinatorKey;
 import org.apache.kafka.common.GroupState;
 import org.apache.kafka.common.GroupType;
 import org.apache.kafka.common.KafkaFuture;
@@ -162,9 +161,9 @@ public class ShareGroupCommandTest {
                 ), 0)),
                 GroupState.STABLE,
                 new Node(0, "host1", 9090), 0, 0);
-            ListShareGroupOffsetsResult listShareGroupOffsetsResult = new ListShareGroupOffsetsResult(
+            ListShareGroupOffsetsResult listShareGroupOffsetsResult = ListShareGroupOffsetsResult.createListShareGroupOffsetsResult(
                 Map.of(
-                    CoordinatorKey.byGroupId(firstGroup),
+                    firstGroup,
                     KafkaFuture.completedFuture(Map.of(new TopicPartition("topic1", 0), 0L))
                 )
             );
@@ -216,15 +215,15 @@ public class ShareGroupCommandTest {
                 ), 0)),
                 GroupState.STABLE,
                 new Node(0, "host1", 9090), 0, 0);
-            ListShareGroupOffsetsResult listShareGroupOffsetsResult1 = new ListShareGroupOffsetsResult(
+            ListShareGroupOffsetsResult listShareGroupOffsetsResult1 = ListShareGroupOffsetsResult.createListShareGroupOffsetsResult(
                 Map.of(
-                    CoordinatorKey.byGroupId(firstGroup),
+                    firstGroup,
                     KafkaFuture.completedFuture(Map.of(new TopicPartition("topic1", 0), 0L))
                 )
             );
-            ListShareGroupOffsetsResult listShareGroupOffsetsResult2 = new ListShareGroupOffsetsResult(
+            ListShareGroupOffsetsResult listShareGroupOffsetsResult2 = ListShareGroupOffsetsResult.createListShareGroupOffsetsResult(
                 Map.of(
-                    CoordinatorKey.byGroupId(secondGroup),
+                    secondGroup,
                     KafkaFuture.completedFuture(Map.of(new TopicPartition("topic1", 0), 0L))
                 )
             );
