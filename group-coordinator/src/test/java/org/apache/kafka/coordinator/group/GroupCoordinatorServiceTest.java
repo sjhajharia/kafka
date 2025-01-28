@@ -2579,6 +2579,111 @@ public class GroupCoordinatorServiceTest {
     }
 
     @Test
+    public void testDescribeShareGroupOffsetsWithDefaultPersisterThrowsError() {
+        CoordinatorRuntime<GroupCoordinatorShard, CoordinatorRecord> runtime = mockRuntime();
+        Persister persister = mock(DefaultStatePersister.class);
+        GroupCoordinatorService service = new GroupCoordinatorService(
+            new LogContext(),
+            createConfig(),
+            runtime,
+            new GroupCoordinatorMetrics(),
+            createConfigManager(),
+            persister
+        );
+        service.startup(() -> 1);
+
+        Uuid topicId = Uuid.randomUuid();
+        int partition = 1;
+        int leaderEpoch = 0;
+        ReadShareGroupStateSummaryRequestData requestData = new ReadShareGroupStateSummaryRequestData()
+            .setGroupId("share-group-id")
+            .setTopics(List.of(new ReadShareGroupStateSummaryRequestData.ReadStateSummaryData()
+                .setTopicId(topicId)
+                .setPartitions(List.of(new ReadShareGroupStateSummaryRequestData.PartitionData()
+                    .setPartition(partition)
+                    .setLeaderEpoch(leaderEpoch)))
+            ));
+
+        when(persister.readSummary(ArgumentMatchers.any()))
+            .thenReturn(CompletableFuture.failedFuture(new Exception("Unable to validate read state summary request")));
+
+        CompletableFuture<ReadShareGroupStateSummaryResponseData> future =
+            service.describeShareGroupOffsets(requestContext(ApiKeys.DESCRIBE_SHARE_GROUP_OFFSETS), requestData);
+        assertFutureThrows(future, Exception.class, "Unable to validate read state summary request");
+    }
+
+    @Test
+    public void testDescribeShareGroupOffsetsWithDefaultPersisterNullResult() {
+        CoordinatorRuntime<GroupCoordinatorShard, CoordinatorRecord> runtime = mockRuntime();
+        Persister persister = mock(DefaultStatePersister.class);
+        GroupCoordinatorService service = new GroupCoordinatorService(
+            new LogContext(),
+            createConfig(),
+            runtime,
+            new GroupCoordinatorMetrics(),
+            createConfigManager(),
+            persister
+        );
+        service.startup(() -> 1);
+
+        Uuid topicId = Uuid.randomUuid();
+        int partition = 1;
+        int leaderEpoch = 0;
+        ReadShareGroupStateSummaryRequestData requestData = new ReadShareGroupStateSummaryRequestData()
+            .setGroupId("share-group-id")
+            .setTopics(List.of(new ReadShareGroupStateSummaryRequestData.ReadStateSummaryData()
+                .setTopicId(topicId)
+                .setPartitions(List.of(new ReadShareGroupStateSummaryRequestData.PartitionData()
+                    .setPartition(partition)
+                    .setLeaderEpoch(leaderEpoch)))
+            ));
+
+        when(persister.readSummary(ArgumentMatchers.any()))
+            .thenReturn(CompletableFuture.completedFuture(null));
+
+        CompletableFuture<ReadShareGroupStateSummaryResponseData> future =
+            service.describeShareGroupOffsets(requestContext(ApiKeys.DESCRIBE_SHARE_GROUP_OFFSETS), requestData);
+        assertFutureThrows(future, IllegalStateException.class, "Result is null for the read state summary");
+    }
+
+    @Test
+    public void testDescribeShareGroupOffsetsWithDefaultPersisterNullTopicData() {
+        CoordinatorRuntime<GroupCoordinatorShard, CoordinatorRecord> runtime = mockRuntime();
+        Persister persister = mock(DefaultStatePersister.class);
+        GroupCoordinatorService service = new GroupCoordinatorService(
+            new LogContext(),
+            createConfig(),
+            runtime,
+            new GroupCoordinatorMetrics(),
+            createConfigManager(),
+            persister
+        );
+        service.startup(() -> 1);
+
+        Uuid topicId = Uuid.randomUuid();
+        int partition = 1;
+        int leaderEpoch = 0;
+        ReadShareGroupStateSummaryRequestData requestData = new ReadShareGroupStateSummaryRequestData()
+            .setGroupId("share-group-id")
+            .setTopics(List.of(new ReadShareGroupStateSummaryRequestData.ReadStateSummaryData()
+                .setTopicId(topicId)
+                .setPartitions(List.of(new ReadShareGroupStateSummaryRequestData.PartitionData()
+                    .setPartition(partition)
+                    .setLeaderEpoch(leaderEpoch)))
+            ));
+
+        ReadShareGroupStateSummaryResult readShareGroupStateSummaryResult =
+            new ReadShareGroupStateSummaryResult.Builder().setTopicsData(null).build();
+
+        when(persister.readSummary(ArgumentMatchers.any()))
+            .thenReturn(CompletableFuture.completedFuture(readShareGroupStateSummaryResult));
+
+        CompletableFuture<ReadShareGroupStateSummaryResponseData> future =
+            service.describeShareGroupOffsets(requestContext(ApiKeys.DESCRIBE_SHARE_GROUP_OFFSETS), requestData);
+        assertFutureThrows(future, IllegalStateException.class, "Result is null for the read state summary");
+    }
+
+    @Test
     public void testDescribeShareGroupOffsetsCoordinatorNotActive() throws ExecutionException, InterruptedException {
         CoordinatorRuntime<GroupCoordinatorShard, CoordinatorRecord> runtime = mockRuntime();
         GroupCoordinatorService service = new GroupCoordinatorService(

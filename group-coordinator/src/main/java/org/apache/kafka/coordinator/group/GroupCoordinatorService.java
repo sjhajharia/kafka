@@ -973,7 +973,7 @@ public class GroupCoordinatorService implements GroupCoordinator {
                     future.completeExceptionally(error);
                     return;
                 }
-                if (result == null || result.topicsData() == null || result.topicsData().isEmpty()) {
+                if (result == null || result.topicsData() == null) {
                     log.error("Result is null for the read state summary");
                     future.completeExceptionally(new IllegalStateException("Result is null for the read state summary"));
                     return;
