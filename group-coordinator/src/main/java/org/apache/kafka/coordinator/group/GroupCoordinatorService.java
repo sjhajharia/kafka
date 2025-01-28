@@ -169,26 +169,16 @@ public class GroupCoordinatorService implements GroupCoordinator {
             return this;
         }
 
-        @SuppressWarnings("NPathComplexity")
         public GroupCoordinatorService build() {
-            if (config == null)
-                throw new IllegalArgumentException("Config must be set.");
-            if (writer == null)
-                throw new IllegalArgumentException("Writer must be set.");
-            if (loader == null)
-                throw new IllegalArgumentException("Loader must be set.");
-            if (time == null)
-                throw new IllegalArgumentException("Time must be set.");
-            if (timer == null)
-                throw new IllegalArgumentException("Timer must be set.");
-            if (coordinatorRuntimeMetrics == null)
-                throw new IllegalArgumentException("CoordinatorRuntimeMetrics must be set.");
-            if (groupCoordinatorMetrics == null)
-                throw new IllegalArgumentException("GroupCoordinatorMetrics must be set.");
-            if (groupConfigManager == null)
-                throw new IllegalArgumentException("GroupConfigManager must be set.");
-            if (persister == null)
-                throw new IllegalArgumentException("Persister must be set.");
+            requireNonNull(config, new IllegalArgumentException("Config must be set."));
+            requireNonNull(writer, new IllegalArgumentException("Writer must be set."));
+            requireNonNull(loader, new IllegalArgumentException("Loader must be set."));
+            requireNonNull(time, new IllegalArgumentException("Time must be set."));
+            requireNonNull(timer, new IllegalArgumentException("Timer must be set."));
+            requireNonNull(coordinatorRuntimeMetrics, new IllegalArgumentException("CoordinatorRuntimeMetrics must be set."));
+            requireNonNull(groupCoordinatorMetrics, new IllegalArgumentException("GroupCoordinatorMetrics must be set."));
+            requireNonNull(groupConfigManager, new IllegalArgumentException("GroupConfigManager must be set."));
+            requireNonNull(persister, new IllegalArgumentException("Persister must be set."));
 
             String logPrefix = String.format("GroupCoordinator id=%d", nodeId);
             LogContext logContext = new LogContext(String.format("[%s] ", logPrefix));
@@ -260,7 +250,7 @@ public class GroupCoordinatorService implements GroupCoordinator {
     private final GroupConfigManager groupConfigManager;
 
     /**
-     * The Persister to persist the state of GC
+     * The Persister to persist the state of share partition state.
      */
     private final Persister persister;
 
@@ -1345,6 +1335,12 @@ public class GroupCoordinatorService implements GroupCoordinator {
                         .setErrorCode(error.code()),
                     log
                 );
+        }
+    }
+
+    private static void requireNonNull(Object obj, RuntimeException throwable) {
+        if (obj == null) {
+            throw throwable;
         }
     }
 }

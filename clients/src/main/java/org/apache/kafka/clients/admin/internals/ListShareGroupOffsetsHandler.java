@@ -16,6 +16,8 @@
  */
 package org.apache.kafka.clients.admin.internals;
 
+import org.apache.kafka.clients.admin.KafkaAdminClient;
+import org.apache.kafka.clients.admin.ListShareGroupOffsetsOptions;
 import org.apache.kafka.clients.admin.ListShareGroupOffsetsSpec;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
@@ -37,18 +39,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
-public class DescribeShareGroupOffsetsHandler extends AdminApiHandler.Batched<CoordinatorKey, Map<TopicPartition, Long>> {
+/**
+ * This class is the handler for {@link KafkaAdminClient#listShareGroupOffsets(Map, ListShareGroupOffsetsOptions)} call
+ */
+public class ListShareGroupOffsetsHandler extends AdminApiHandler.Batched<CoordinatorKey, Map<TopicPartition, Long>> {
 
     private final Map<String, ListShareGroupOffsetsSpec> groupSpecs;
     private final Logger log;
     private final AdminApiLookupStrategy<CoordinatorKey> lookupStrategy;
 
-    public DescribeShareGroupOffsetsHandler(
+    public ListShareGroupOffsetsHandler(
         Map<String, ListShareGroupOffsetsSpec> groupSpecs,
         LogContext logContext) {
         this.groupSpecs = groupSpecs;
-        this.log = logContext.logger(DescribeShareGroupOffsetsHandler.class);
+        this.log = logContext.logger(ListShareGroupOffsetsHandler.class);
         this.lookupStrategy = new CoordinatorStrategy(CoordinatorType.GROUP, logContext);
     }
 
@@ -58,7 +62,7 @@ public class DescribeShareGroupOffsetsHandler extends AdminApiHandler.Batched<Co
 
     @Override
     public String apiName() {
-        return "describeShareGroupOffsets";
+        return "listShareGroupOffsets";
     }
 
     @Override
@@ -75,9 +79,10 @@ public class DescribeShareGroupOffsetsHandler extends AdminApiHandler.Batched<Co
             }
             return key.idValue;
         }).collect(Collectors.toList());
+        // The DescribeShareGroupOffsetsRequest only includes a single group ID at this point, which is likely a mistake to be fixing a follow-on PR.
         String groupId = groupIds.isEmpty() ? null : groupIds.get(0);
-        if (groupId == null) {
-            throw new IllegalArgumentException("GroupId is null");
+        if (groupIds.isEmpty() || groupIds.get(0) == null) {
+            throw new IllegalArgumentException("Missing group id in request");
         }
         ListShareGroupOffsetsSpec spec = groupSpecs.get(groupId);
         List<DescribeShareGroupOffsetsRequestData.DescribeShareGroupOffsetsRequestTopic> topics =
