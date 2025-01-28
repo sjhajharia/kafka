@@ -54,8 +54,6 @@ import org.apache.kafka.common.message.ListOffsetsResponseData.{ListOffsetsParti
 import org.apache.kafka.common.message.MetadataResponseData.MetadataResponseTopic
 import org.apache.kafka.common.message.OffsetDeleteRequestData.{OffsetDeleteRequestPartition, OffsetDeleteRequestTopic, OffsetDeleteRequestTopicCollection}
 import org.apache.kafka.common.message.OffsetDeleteResponseData.{OffsetDeleteResponsePartition, OffsetDeleteResponsePartitionCollection, OffsetDeleteResponseTopic, OffsetDeleteResponseTopicCollection}
-import org.apache.kafka.common.message.ReadShareGroupStateSummaryRequestData.ReadStateSummaryData
-import org.apache.kafka.common.message.ReadShareGroupStateSummaryResponseData.{PartitionResult, ReadStateSummaryResult}
 import org.apache.kafka.common.message.ShareFetchRequestData.{AcknowledgementBatch, ForgottenTopic}
 import org.apache.kafka.common.message.ShareFetchResponseData.{AcquiredRecords, PartitionData, ShareFetchableTopicResponse}
 import org.apache.kafka.common.metadata.{PartitionRecord, RegisterBrokerRecord, TopicRecord}
@@ -10503,26 +10501,12 @@ class KafkaApisTest extends Logging {
       )
     )
 
-    val readShareGroupStateSummaryRequestData = new ReadShareGroupStateSummaryRequestData().setGroupId("group").setTopics(
-      util.List.of(
-        new ReadStateSummaryData().setTopicId(topicId1).setPartitions(util.List.of(
-          new ReadShareGroupStateSummaryRequestData.PartitionData().setPartition(1).setLeaderEpoch(0),
-          new ReadShareGroupStateSummaryRequestData.PartitionData().setPartition(2).setLeaderEpoch(0),
-          new ReadShareGroupStateSummaryRequestData.PartitionData().setPartition(3).setLeaderEpoch(0),
-        )),
-        new ReadStateSummaryData().setTopicId(topicId2).setPartitions(util.List.of(
-          new ReadShareGroupStateSummaryRequestData.PartitionData().setPartition(10).setLeaderEpoch(0),
-          new ReadShareGroupStateSummaryRequestData.PartitionData().setPartition(20).setLeaderEpoch(0)
-        ))
-      )
-    )
-
     val requestChannelRequest = buildRequest(new DescribeShareGroupOffsetsRequest.Builder(describeShareGroupOffsetsRequest, true).build())
 
-    val future = new CompletableFuture[ReadShareGroupStateSummaryResponseData]()
+    val future = new CompletableFuture[DescribeShareGroupOffsetsResponseData]()
     when(groupCoordinator.describeShareGroupOffsets(
       requestChannelRequest.context,
-      readShareGroupStateSummaryRequestData
+      describeShareGroupOffsetsRequest
     )).thenReturn(future)
     kafkaApis = createKafkaApis(
       overrideProperties = Map(ShareGroupConfig.SHARE_GROUP_ENABLE_CONFIG -> "true"),
@@ -10573,49 +10557,7 @@ class KafkaApisTest extends Logging {
           ))
       ))
 
-    val readShareGroupStateSummaryResponseData = new ReadShareGroupStateSummaryResponseData()
-      .setResults(util.List.of(
-        new ReadStateSummaryResult()
-          .setTopicId(topicId1)
-          .setPartitions(util.List.of(
-            new PartitionResult()
-              .setPartition(1)
-              .setStartOffset(0)
-              .setStateEpoch(1)
-              .setErrorMessage(null)
-              .setErrorCode(0),
-            new PartitionResult()
-              .setPartition(2)
-              .setStartOffset(0)
-              .setStateEpoch(1)
-              .setErrorMessage(null)
-              .setErrorCode(0),
-            new PartitionResult()
-              .setPartition(3)
-              .setStartOffset(0)
-              .setStateEpoch(1)
-              .setErrorMessage(null)
-              .setErrorCode(0)
-          )),
-        new ReadStateSummaryResult()
-          .setTopicId(topicId2)
-          .setPartitions(util.List.of(
-            new PartitionResult()
-              .setPartition(10)
-              .setStartOffset(0)
-              .setStateEpoch(1)
-              .setErrorMessage(null)
-              .setErrorCode(0),
-            new PartitionResult()
-              .setPartition(20)
-              .setStartOffset(0)
-              .setStateEpoch(1)
-              .setErrorMessage(null)
-              .setErrorCode(0)
-          ))
-      ))
-
-    future.complete(readShareGroupStateSummaryResponseData)
+    future.complete(describeShareGroupOffsetsResponse)
     val response = verifyNoThrottling[DescribeShareGroupOffsetsResponse](requestChannelRequest)
     assertEquals(describeShareGroupOffsetsResponse, response.data)
   }

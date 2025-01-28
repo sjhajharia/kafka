@@ -26,6 +26,8 @@ import org.apache.kafka.common.message.ConsumerGroupHeartbeatRequestData;
 import org.apache.kafka.common.message.ConsumerGroupHeartbeatResponseData;
 import org.apache.kafka.common.message.DeleteGroupsResponseData;
 import org.apache.kafka.common.message.DescribeGroupsResponseData;
+import org.apache.kafka.common.message.DescribeShareGroupOffsetsRequestData;
+import org.apache.kafka.common.message.DescribeShareGroupOffsetsResponseData;
 import org.apache.kafka.common.message.HeartbeatRequestData;
 import org.apache.kafka.common.message.HeartbeatResponseData;
 import org.apache.kafka.common.message.JoinGroupRequestData;
@@ -41,7 +43,6 @@ import org.apache.kafka.common.message.OffsetDeleteResponseData;
 import org.apache.kafka.common.message.OffsetFetchRequestData;
 import org.apache.kafka.common.message.OffsetFetchResponseData;
 import org.apache.kafka.common.message.ReadShareGroupStateSummaryRequestData;
-import org.apache.kafka.common.message.ReadShareGroupStateSummaryResponseData;
 import org.apache.kafka.common.message.ShareGroupDescribeResponseData;
 import org.apache.kafka.common.message.ShareGroupDescribeResponseData.DescribedGroup;
 import org.apache.kafka.common.message.ShareGroupHeartbeatRequestData;
@@ -55,8 +56,8 @@ import org.apache.kafka.common.requests.ApiError;
 import org.apache.kafka.common.requests.ConsumerGroupDescribeRequest;
 import org.apache.kafka.common.requests.DeleteGroupsRequest;
 import org.apache.kafka.common.requests.DescribeGroupsRequest;
+import org.apache.kafka.common.requests.DescribeShareGroupOffsetsRequest;
 import org.apache.kafka.common.requests.OffsetCommitRequest;
-import org.apache.kafka.common.requests.ReadShareGroupStateSummaryRequest;
 import org.apache.kafka.common.requests.RequestContext;
 import org.apache.kafka.common.requests.ShareGroupDescribeRequest;
 import org.apache.kafka.common.requests.TransactionResult;
@@ -264,6 +265,8 @@ public class GroupCoordinatorService implements GroupCoordinator {
      * when the component is started.
      */
     private volatile int numPartitions = -1;
+
+    private MetadataImage metadataImage = null;
 
     /**
      *
@@ -949,24 +952,38 @@ public class GroupCoordinatorService implements GroupCoordinator {
     }
 
     /**
-     * See {@link GroupCoordinator#describeShareGroupOffsets(RequestContext, ReadShareGroupStateSummaryRequestData)}.
+     * See {@link GroupCoordinator#describeShareGroupOffsets(RequestContext, DescribeShareGroupOffsetsRequestData)}.
      */
     @Override
-    public CompletableFuture<ReadShareGroupStateSummaryResponseData> describeShareGroupOffsets(
+    public CompletableFuture<DescribeShareGroupOffsetsResponseData> describeShareGroupOffsets(
         RequestContext context,
-        ReadShareGroupStateSummaryRequestData requestData
+        DescribeShareGroupOffsetsRequestData requestData
     ) {
         if (!isActive.get()) {
             return CompletableFuture.completedFuture(
-                new ReadShareGroupStateSummaryResponseData()
-                    .setResults(ReadShareGroupStateSummaryRequest.getErrorReadShareGroupStateSummary(
+                new DescribeShareGroupOffsetsResponseData()
+                    .setResponses(DescribeShareGroupOffsetsRequest.getErrorDescribeShareGroupOffsets(
                         requestData.topics(),
                         Errors.COORDINATOR_NOT_AVAILABLE
                     ))
             );
         }
-        CompletableFuture<ReadShareGroupStateSummaryResponseData> future = new CompletableFuture<>();
-        persister.readSummary(ReadShareGroupStateSummaryParameters.from(requestData))
+
+        List<ReadShareGroupStateSummaryRequestData.ReadStateSummaryData> readStateSummaryData =
+            requestData.topics().stream().map(
+                topic -> new ReadShareGroupStateSummaryRequestData.ReadStateSummaryData()
+                    .setTopicId(metadataImage.topics().topicNameToIdView().get(topic.topicName()))
+                    .setPartitions(
+                        topic.partitions().stream().map(
+                            partitionIndex -> new ReadShareGroupStateSummaryRequestData.PartitionData().setPartition(partitionIndex)
+                        ).toList()
+                    )
+            ).toList();
+        ReadShareGroupStateSummaryRequestData readSummaryRequestData = new ReadShareGroupStateSummaryRequestData()
+            .setGroupId(requestData.groupId())
+            .setTopics(readStateSummaryData);
+        CompletableFuture<DescribeShareGroupOffsetsResponseData> future = new CompletableFuture<>();
+        persister.readSummary(ReadShareGroupStateSummaryParameters.from(readSummaryRequestData))
             .whenComplete((result, error) -> {
                 if (error != null) {
                     log.error("Failed to read summary of the share partition");
@@ -978,19 +995,20 @@ public class GroupCoordinatorService implements GroupCoordinator {
                     future.completeExceptionally(new IllegalStateException("Result is null for the read state summary"));
                     return;
                 }
-                List<ReadShareGroupStateSummaryResponseData.ReadStateSummaryResult> summaryResult = result.topicsData().stream().map(
-                    topicData -> new ReadShareGroupStateSummaryResponseData.ReadStateSummaryResult()
-                        .setTopicId(topicData.topicId())
-                        .setPartitions(topicData.partitions().stream().map(
-                            partitionData -> new ReadShareGroupStateSummaryResponseData.PartitionResult()
-                                .setPartition(partitionData.partition())
-                                .setStateEpoch(partitionData.stateEpoch())
-                                .setStartOffset(partitionData.startOffset())
-                                .setErrorMessage(partitionData.errorMessage())
-                                .setErrorCode(partitionData.errorCode())
-                        ).toList())
-                ).toList();
-                future.complete(new ReadShareGroupStateSummaryResponseData().setResults(summaryResult));
+                List<DescribeShareGroupOffsetsResponseData.DescribeShareGroupOffsetsResponseTopic> describeShareGroupOffsetsResponseTopicList =
+                    result.topicsData().stream().map(
+                        topicData -> new DescribeShareGroupOffsetsResponseData.DescribeShareGroupOffsetsResponseTopic()
+                            .setTopicId(topicData.topicId())
+                            .setTopicName(metadataImage.topics().topicIdToNameView().get(topicData.topicId()))
+                            .setPartitions(topicData.partitions().stream().map(
+                                partitionData -> new DescribeShareGroupOffsetsResponseData.DescribeShareGroupOffsetsResponsePartition()
+                                    .setPartitionIndex(partitionData.partition())
+                                    .setStartOffset(partitionData.startOffset())
+                                    .setErrorMessage(partitionData.errorMessage())
+                                    .setErrorCode(partitionData.errorCode())
+                            ).toList())
+                    ).toList();
+                future.complete(new DescribeShareGroupOffsetsResponseData().setResponses(describeShareGroupOffsetsResponseTopicList));
             });
         return future;
     }
@@ -1221,6 +1239,7 @@ public class GroupCoordinatorService implements GroupCoordinator {
         MetadataDelta delta
     ) {
         throwIfNotActive();
+        metadataImage = newImage;
         runtime.onNewMetadataImage(newImage, delta);
     }
 

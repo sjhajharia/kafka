@@ -22,6 +22,8 @@ import org.apache.kafka.common.message.ConsumerGroupHeartbeatRequestData;
 import org.apache.kafka.common.message.ConsumerGroupHeartbeatResponseData;
 import org.apache.kafka.common.message.DeleteGroupsResponseData;
 import org.apache.kafka.common.message.DescribeGroupsResponseData;
+import org.apache.kafka.common.message.DescribeShareGroupOffsetsRequestData;
+import org.apache.kafka.common.message.DescribeShareGroupOffsetsResponseData;
 import org.apache.kafka.common.message.HeartbeatRequestData;
 import org.apache.kafka.common.message.HeartbeatResponseData;
 import org.apache.kafka.common.message.JoinGroupRequestData;
@@ -36,8 +38,6 @@ import org.apache.kafka.common.message.OffsetDeleteRequestData;
 import org.apache.kafka.common.message.OffsetDeleteResponseData;
 import org.apache.kafka.common.message.OffsetFetchRequestData;
 import org.apache.kafka.common.message.OffsetFetchResponseData;
-import org.apache.kafka.common.message.ReadShareGroupStateSummaryRequestData;
-import org.apache.kafka.common.message.ReadShareGroupStateSummaryResponseData;
 import org.apache.kafka.common.message.ShareGroupDescribeResponseData;
 import org.apache.kafka.common.message.ShareGroupHeartbeatRequestData;
 import org.apache.kafka.common.message.ShareGroupHeartbeatResponseData;
@@ -265,9 +265,9 @@ public interface GroupCoordinator {
      * @param request The DescribeShareGroupOffsets request.
      * @return A future yielding the results.
      */
-    CompletableFuture<ReadShareGroupStateSummaryResponseData> describeShareGroupOffsets(
+    CompletableFuture<DescribeShareGroupOffsetsResponseData> describeShareGroupOffsets(
         RequestContext context,
-        ReadShareGroupStateSummaryRequestData request
+        DescribeShareGroupOffsetsRequestData request
     );
 
     /**
