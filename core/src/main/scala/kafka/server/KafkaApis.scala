@@ -3228,20 +3228,20 @@ class KafkaApis(val requestChannel: RequestChannel,
   private def getReadShareGroupStateSummaryRequestFromDescribeShareGroupOffsetsRequest(describeShareGroupOffsetsRequestData: DescribeShareGroupOffsetsRequestData,
                                                                                        topicNamesId: util.Map[String, Uuid]
                                                                                       ): ReadShareGroupStateSummaryRequestData = {
-    val readStateSummaryTopics = describeShareGroupOffsetsRequestData.topics.asScala.map(
+    val readStateSummaryTopics = describeShareGroupOffsetsRequestData.topics.stream.map(
       topic => {
-        val partitions = topic.partitions.asScala.map(
+        val partitions = topic.partitions.stream.map(
           partitionIndex => {
             new PartitionData()
               .setPartition(partitionIndex)
               .setLeaderEpoch(0)
           }
-        ).asJava
+        ).toList
         new ReadStateSummaryData()
           .setTopicId(topicNamesId.get(topic.topicName()))
           .setPartitions(partitions)
       }
-    ).asJava
+    ).toList
 
     val result = new ReadShareGroupStateSummaryRequestData()
       .setGroupId(describeShareGroupOffsetsRequestData.groupId())
@@ -3252,9 +3252,9 @@ class KafkaApis(val requestChannel: RequestChannel,
   private def getDescribeShareGroupOffsetsResponseFromReadShareGroupStateSummaryResponse(readShareGroupStateSummaryResponseData: ReadShareGroupStateSummaryResponseData,
                                                                                          topicIdNames: util.Map[Uuid, String]
                                                                                         ): DescribeShareGroupOffsetsResponseData = {
-    val describeShareGroupOffsetsResponseData = readShareGroupStateSummaryResponseData.results().asScala.map(
+    val describeShareGroupOffsetsResponseData = readShareGroupStateSummaryResponseData.results.stream.map(
       readStateSummaryResult => {
-        val partitions = readStateSummaryResult.partitions().asScala.map(
+        val partitions = readStateSummaryResult.partitions.stream.map(
           partitionResult => {
             new DescribeShareGroupOffsetsResponsePartition()
               .setPartitionIndex(partitionResult.partition())
@@ -3263,13 +3263,13 @@ class KafkaApis(val requestChannel: RequestChannel,
               .setErrorCode(partitionResult.errorCode())
               .setErrorMessage(partitionResult.errorMessage())
           }
-        ).asJava
+        ).toList
         new DescribeShareGroupOffsetsResponseTopic()
           .setTopicId(readStateSummaryResult.topicId())
           .setTopicName(topicIdNames.get(readStateSummaryResult.topicId()))
           .setPartitions(partitions)
       }
-    ).asJava
+    ).toList
 
     val result = new DescribeShareGroupOffsetsResponseData().setResponses(describeShareGroupOffsetsResponseData)
     result
