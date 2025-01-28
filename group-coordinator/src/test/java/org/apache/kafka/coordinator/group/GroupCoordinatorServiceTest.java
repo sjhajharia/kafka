@@ -2456,7 +2456,7 @@ public class GroupCoordinatorServiceTest {
         private final LogContext logContext = new LogContext();
         private final GroupConfigManager configManager = createConfigManager();
         private GroupCoordinatorConfig config;
-        private CoordinatorRuntime runtime;
+        private CoordinatorRuntime<GroupCoordinatorShard, CoordinatorRecord> runtime;
         private GroupCoordinatorMetrics metrics = new GroupCoordinatorMetrics();
         private Persister persister = new NoOpShareStatePersister();
         private MetadataImage metadataImage = null;
@@ -2495,7 +2495,7 @@ public class GroupCoordinatorServiceTest {
             return this;
         }
 
-        public GroupCoordinatorServiceBuilder setRuntime(CoordinatorRuntime runtime) {
+        public GroupCoordinatorServiceBuilder setRuntime(CoordinatorRuntime<GroupCoordinatorShard, CoordinatorRecord> runtime) {
             this.runtime = runtime;
             return this;
         }
