@@ -2410,6 +2410,43 @@ public class GroupCoordinatorServiceTest {
         assertEquals(responseData, future.get());
     }
 
+    @Test
+    public void testDescribeShareGroupOffsetsMetadataImageNull() throws ExecutionException, InterruptedException {
+        CoordinatorRuntime<GroupCoordinatorShard, CoordinatorRecord> runtime = mockRuntime();
+        GroupCoordinatorService service = new GroupCoordinatorServiceBuilder()
+            .setConfig(createConfig())
+            .setRuntime(runtime)
+            .build(true);
+
+        // Forcing a null Metadata Image
+        service.onNewMetadataImage(null, null);
+
+        int partition = 1;
+        DescribeShareGroupOffsetsRequestData requestData = new DescribeShareGroupOffsetsRequestData()
+            .setGroupId("share-group-id")
+            .setTopics(List.of(new DescribeShareGroupOffsetsRequestData.DescribeShareGroupOffsetsRequestTopic()
+                .setTopicName(TOPIC_NAME)
+                .setPartitions(List.of(partition))
+            ));
+
+        DescribeShareGroupOffsetsResponseData responseData = new DescribeShareGroupOffsetsResponseData()
+            .setResponses(
+                List.of(new DescribeShareGroupOffsetsResponseData.DescribeShareGroupOffsetsResponseTopic()
+                    .setTopicName(TOPIC_NAME)
+                    .setPartitions(List.of(new DescribeShareGroupOffsetsResponseData.DescribeShareGroupOffsetsResponsePartition()
+                        .setPartitionIndex(partition)
+                        .setStartOffset(0)
+                        .setErrorCode(Errors.UNKNOWN_TOPIC_OR_PARTITION.code())
+                        .setErrorMessage(Errors.UNKNOWN_TOPIC_OR_PARTITION.message())))
+                )
+            );
+
+        CompletableFuture<DescribeShareGroupOffsetsResponseData> future =
+            service.describeShareGroupOffsets(requestContext(ApiKeys.DESCRIBE_SHARE_GROUP_OFFSETS), requestData);
+
+        assertEquals(responseData, future.get());
+    }
+
     @FunctionalInterface
     interface TriFunction<A, B, C, R> {
         R apply(A a, B b, C c);

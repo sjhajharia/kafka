@@ -266,6 +266,10 @@ public class GroupCoordinatorService implements GroupCoordinator {
      */
     private volatile int numPartitions = -1;
 
+    /**
+     * The metadata image to extract topic id to names map.
+     * This is initialised when the {@link GroupCoordinator#onNewMetadataImage(MetadataImage, MetadataDelta)} is called
+     */
     private MetadataImage metadataImage = null;
 
     /**
@@ -965,6 +969,16 @@ public class GroupCoordinatorService implements GroupCoordinator {
                     .setResponses(DescribeShareGroupOffsetsRequest.getErrorDescribeShareGroupOffsets(
                         requestData.topics(),
                         Errors.COORDINATOR_NOT_AVAILABLE
+                    ))
+            );
+        }
+
+        if (metadataImage == null) {
+            return CompletableFuture.completedFuture(
+                new DescribeShareGroupOffsetsResponseData()
+                    .setResponses(DescribeShareGroupOffsetsRequest.getErrorDescribeShareGroupOffsets(
+                        requestData.topics(),
+                        Errors.UNKNOWN_TOPIC_OR_PARTITION
                     ))
             );
         }
