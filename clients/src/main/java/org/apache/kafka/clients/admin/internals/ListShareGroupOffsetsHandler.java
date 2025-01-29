@@ -81,7 +81,7 @@ public class ListShareGroupOffsetsHandler extends AdminApiHandler.Batched<Coordi
         }).collect(Collectors.toList());
         // The DescribeShareGroupOffsetsRequest only includes a single group ID at this point, which is likely a mistake to be fixing a follow-on PR.
         String groupId = groupIds.isEmpty() ? null : groupIds.get(0);
-        if (groupIds.isEmpty() || groupIds.get(0) == null) {
+        if (groupId == null) {
             throw new IllegalArgumentException("Missing group id in request");
         }
         ListShareGroupOffsetsSpec spec = groupSpecs.get(groupId);
