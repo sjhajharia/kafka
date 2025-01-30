@@ -22,6 +22,7 @@ import org.apache.kafka.clients.admin.ListShareGroupOffsetsSpec;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.message.DescribeShareGroupOffsetsRequestData;
+import org.apache.kafka.common.protocol.Errors;
 import org.apache.kafka.common.requests.AbstractResponse;
 import org.apache.kafka.common.requests.DescribeShareGroupOffsetsRequest;
 import org.apache.kafka.common.requests.DescribeShareGroupOffsetsResponse;
@@ -31,8 +32,8 @@ import org.apache.kafka.common.utils.LogContext;
 
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -110,13 +111,18 @@ public class ListShareGroupOffsetsHandler extends AdminApiHandler.Batched<Coordi
             response.data().responses().stream().map(
                 describedTopic ->
                     describedTopic.partitions().stream().map(
-                        partition ->
-                            data.put(new TopicPartition(describedTopic.topicName(), partition.partitionIndex()), partition.startOffset())
+                        partition -> {
+                            if (partition.errorCode() == Errors.NONE.code())
+                                data.put(new TopicPartition(describedTopic.topicName(), partition.partitionIndex()), partition.startOffset());
+                            else
+                                log.error("Skipping return offset for topic {} partition {} due to error {}.", describedTopic.topicName(), partition.partitionIndex(), Errors.forCode(partition.errorCode()));
+                            return data;
+                        }
                     ).collect(Collectors.toList())
             ).collect(Collectors.toList());
             completed.put(groupId, data);
         }
-        return new ApiResult<>(completed, failed, new ArrayList<>());
+        return new ApiResult<>(completed, failed, Collections.emptyList());
     }
 
     private static Set<CoordinatorKey> coordinatorKeys(Collection<String> groupIds) {

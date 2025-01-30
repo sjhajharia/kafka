@@ -43,8 +43,6 @@ import org.apache.kafka.tools.consumer.group.ShareGroupCommand.ShareGroupService
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -233,9 +231,8 @@ public class ShareGroupCommandTest {
             when(adminClient.listGroups(any(ListGroupsOptions.class))).thenReturn(listGroupsResult);
             when(describeShareGroupsResult.describedGroups()).thenReturn(Map.of(firstGroup, KafkaFuture.completedFuture(exp1), secondGroup, KafkaFuture.completedFuture(exp2)));
             when(adminClient.describeShareGroups(ArgumentMatchers.anyCollection(), any(DescribeShareGroupsOptions.class))).thenReturn(describeShareGroupsResult);
-            when(adminClient.listShareGroupOffsets(ArgumentMatchers.anyMap())).thenAnswer(new Answer<Object>() {
-                @Override
-                public Object answer(InvocationOnMock invocation) throws Throwable {
+            when(adminClient.listShareGroupOffsets(ArgumentMatchers.anyMap())).thenAnswer(
+                invocation -> {
                     Map<String, Object> argument = invocation.getArgument(0);
                     if (argument.containsKey(firstGroup)) {
                         return listShareGroupOffsetsResult1;
@@ -243,8 +240,7 @@ public class ShareGroupCommandTest {
                         return listShareGroupOffsetsResult2;
                     }
                     return null;
-                }
-            });
+                });
             try (ShareGroupService service = getShareGroupService(cgcArgs.toArray(new String[0]), adminClient)) {
                 TestUtils.waitForCondition(() -> {
                     Entry<String, String> res = ToolsTestUtils.grabConsoleOutputAndError(describeGroups(service));

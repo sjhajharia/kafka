@@ -2448,11 +2448,11 @@ public class GroupCoordinatorServiceTest {
     }
 
     @FunctionalInterface
-    interface TriFunction<A, B, C, R> {
+    private interface TriFunction<A, B, C, R> {
         R apply(A a, B b, C c);
     }
 
-    public static class GroupCoordinatorServiceBuilder {
+    private static class GroupCoordinatorServiceBuilder {
         private final LogContext logContext = new LogContext();
         private final GroupConfigManager configManager = createConfigManager();
         private GroupCoordinatorConfig config;
