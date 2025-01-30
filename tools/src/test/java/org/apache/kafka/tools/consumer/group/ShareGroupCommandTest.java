@@ -17,6 +17,7 @@
 package org.apache.kafka.tools.consumer.group;
 
 import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.AdminClientTestUtils;
 import org.apache.kafka.clients.admin.DescribeShareGroupsOptions;
 import org.apache.kafka.clients.admin.DescribeShareGroupsResult;
 import org.apache.kafka.clients.admin.GroupListing;
@@ -161,7 +162,7 @@ public class ShareGroupCommandTest {
                 ), 0)),
                 GroupState.STABLE,
                 new Node(0, "host1", 9090), 0, 0);
-            ListShareGroupOffsetsResult listShareGroupOffsetsResult = ListShareGroupOffsetsResult.createListShareGroupOffsetsResult(
+            ListShareGroupOffsetsResult listShareGroupOffsetsResult = AdminClientTestUtils.createListShareGroupOffsetsResult(
                 Map.of(
                     firstGroup,
                     KafkaFuture.completedFuture(Map.of(new TopicPartition("topic1", 0), 0L))
@@ -215,13 +216,13 @@ public class ShareGroupCommandTest {
                 ), 0)),
                 GroupState.STABLE,
                 new Node(0, "host1", 9090), 0, 0);
-            ListShareGroupOffsetsResult listShareGroupOffsetsResult1 = ListShareGroupOffsetsResult.createListShareGroupOffsetsResult(
+            ListShareGroupOffsetsResult listShareGroupOffsetsResult1 = AdminClientTestUtils.createListShareGroupOffsetsResult(
                 Map.of(
                     firstGroup,
                     KafkaFuture.completedFuture(Map.of(new TopicPartition("topic1", 0), 0L))
                 )
             );
-            ListShareGroupOffsetsResult listShareGroupOffsetsResult2 = ListShareGroupOffsetsResult.createListShareGroupOffsetsResult(
+            ListShareGroupOffsetsResult listShareGroupOffsetsResult2 = AdminClientTestUtils.createListShareGroupOffsetsResult(
                 Map.of(
                     secondGroup,
                     KafkaFuture.completedFuture(Map.of(new TopicPartition("topic1", 0), 0L))

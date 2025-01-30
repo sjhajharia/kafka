@@ -62,7 +62,7 @@ public class ListShareGroupOffsetsHandler extends AdminApiHandler.Batched<Coordi
 
     @Override
     public String apiName() {
-        return "listShareGroupOffsets";
+        return "describeShareGroupOffsets";
     }
 
     @Override
@@ -98,10 +98,9 @@ public class ListShareGroupOffsetsHandler extends AdminApiHandler.Batched<Coordi
     }
 
     @Override
-    public ApiResult<CoordinatorKey, Map<TopicPartition, Long>> handleResponse(
-        Node coordinator,
-        Set<CoordinatorKey> groupIds,
-        AbstractResponse abstractResponse) {
+    public ApiResult<CoordinatorKey, Map<TopicPartition, Long>> handleResponse(Node coordinator,
+                                                                               Set<CoordinatorKey> groupIds,
+                                                                               AbstractResponse abstractResponse) {
         final DescribeShareGroupOffsetsResponse response = (DescribeShareGroupOffsetsResponse) abstractResponse;
         final Map<CoordinatorKey, Map<TopicPartition, Long>> completed = new HashMap<>();
         final Map<CoordinatorKey, Throwable> failed = new HashMap<>();

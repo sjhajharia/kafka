@@ -42,15 +42,6 @@ public class ListShareGroupOffsetsResult {
             .collect(Collectors.toMap(e -> e.getKey().idValue, Map.Entry::getValue));
     }
 
-    public static ListShareGroupOffsetsResult createListShareGroupOffsetsResult(Map<String, KafkaFuture<Map<TopicPartition, Long>>> groupOffsets) {
-        Map<CoordinatorKey, KafkaFuture<Map<TopicPartition, Long>>> coordinatorFutures = groupOffsets.entrySet().stream()
-            .collect(Collectors.toMap(
-                entry -> CoordinatorKey.byGroupId(entry.getKey()),
-                Map.Entry::getValue
-            ));
-        return new ListShareGroupOffsetsResult(coordinatorFutures);
-    }
-
     /**
      * Return the future when the requests for all groups succeed.
      *
