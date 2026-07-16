@@ -382,7 +382,11 @@ public class ShareGroupDLQStateManager {
 
             List<SimpleRecord> simpleRecords = new ArrayList<>();
             for (long i = param.firstOffset(); i <= param.lastOffset(); i++) {
-                long timestamp = time.hiResClockMs();
+                // time.milliseconds() is wall-clock (epoch) time, unlike hiResClockMs() - which is
+                // nanoTime()-derived and measured from an arbitrary, non-epoch origin. Embedding the
+                // latter as a record timestamp made every DLQ record look decades old, so log retention
+                // deleted the segment almost immediately after it was written.
+                long timestamp = time.milliseconds();
                 ByteBuffer key = null;
                 ByteBuffer value = null;
                 Record record = originalRecordData.get(i);

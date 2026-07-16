@@ -539,9 +539,31 @@ class ShareGroupDLQStateManagerTest {
                 HEADER_DLQ_ERRORS_MESSAGE, "simulated cause"
             ), List.of(), List.of())
         ));
+        assertDlqRecordTimestampsAreWallClock(capturedProduces.get(0));
         verify(mockMetrics).recordDLQProduce(GROUP_ID);
         verify(mockMetrics).recordDLQRecordWrite(GROUP_ID, 3);
         verify(mockMetrics, never()).recordDLQProduceFailed(any());
+    }
+
+    /**
+     * Asserts every record in the captured produce request carries {@link #MOCK_TIME}'s wall-clock
+     * time ({@link org.apache.kafka.common.utils.Time#milliseconds()}) as its timestamp - not
+     * {@link org.apache.kafka.common.utils.Time#hiResClockMs()}, which is nanoTime()-derived from an
+     * arbitrary, non-epoch origin and would make every DLQ record look decades old to log retention.
+     * {@link #MOCK_TIME} seeds these two clocks from independently-real values
+     * ({@code System.currentTimeMillis()} vs {@code System.nanoTime()}) specifically so a regression
+     * here is caught instead of masked.
+     */
+    private static void assertDlqRecordTimestampsAreWallClock(ProduceRequest request) {
+        long expectedTimestampMs = MOCK_TIME.milliseconds();
+        for (ProduceRequestData.TopicProduceData topic : request.data().topicData()) {
+            for (ProduceRequestData.PartitionProduceData partition : topic.partitionData()) {
+                for (Record record : ((MemoryRecords) partition.records()).records()) {
+                    assertEquals(expectedTimestampMs, record.timestamp(),
+                        "DLQ record timestamp should be wall-clock time, not an arbitrary-origin clock");
+                }
+            }
+        }
     }
 
     @Test
